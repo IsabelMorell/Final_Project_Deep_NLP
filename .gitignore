@@ -1,4 +1,4 @@
 env/*
 env_project/*
 src/__pycache__/*
-data/*
+data/[Dd]*
