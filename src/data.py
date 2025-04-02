@@ -24,9 +24,9 @@ def download_data(path: str = "data"):
     df_test = process_sentences(df_test)
 
     # save data in .csv
-    df_train.to_csv(f"{path}/df_train.csv", index=False)
-    df_val.to_csv(f"{path}/df_val.csv", index=False)
-    df_test.to_csv(f"{path}/df_test.csv", index=False)
+    df_train.to_csv(f"{path}/train.csv", index=False)
+    df_val.to_csv(f"{path}/val.csv", index=False)
+    df_test.to_csv(f"{path}/test.csv", index=False)
 
     return df_train, df_val, df_test
 
