@@ -12,3 +12,4 @@ necesitaremos 2 errores (CrossEntropyLoss) (TRAIN.PY)
     # out_features = 3 pq tenemos 3 sentimientos (positivo, negativo y neutro)
 
 IDEA: si va mal una solo lineal en clasificacion, hacer una MLP
+IDEA: Agrega dropout entre LSTM y capas lineales.
