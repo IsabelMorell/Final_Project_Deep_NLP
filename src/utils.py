@@ -1,12 +1,95 @@
 # deep learning libraries
 import torch
 import numpy as np
+import pandas as pd
+from typing import Tuple, Any, List
 from torch.jit import RecursiveScriptModule
+from torch.utils.data import Dataset, DataLoader
+from datasets import load_dataset
+from torch.nn.utils.rnn import pad_sequence
 
 # other libraries
 import os
 import random
+import spacy
+import re
+import ast
 
+CONTRACTIONS = {
+    "n't": "not", "'ll": "will", "'re": "are", "'ve": "have", "'m": "am", 
+    "'d": "would", "'s": "is", "won't": "will not", "can't": "cannot"
+}
+IRRELEVANT_WORDS = {"wow", "oops", "ah", "ugh", "yay", "mhm", "`"}
+
+device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+
+def fix_tags_string(x):
+    if isinstance(x, str):
+        x_clean = re.sub(r"\s+", ",", x.strip())
+        nums = [int(n) for n in x_clean.strip("[]").split(",") if n.strip() != ""]
+        return nums
+    return x 
+
+def replace_contractions(text):
+    for contraction, replacement in CONTRACTIONS.items():
+        text = re.sub(r"\b" + re.escape(contraction) + r"\b", replacement, text)
+    return text
+
+def process_sentence_and_align_tags(sentence, original_tags):
+    nlp = spacy.load("en_core_web_sm")
+
+    sentence = replace_contractions(sentence)
+    sentence = sentence.replace("-", "")
+    doc = nlp(sentence)
+
+    processed_tokens = []
+    aligned_tags = []
+
+    tag_idx = 0
+    for token in doc:
+        if token.is_punct or token.is_space or token.text.lower() in IRRELEVANT_WORDS:
+            tag_idx += 1  # Skip both token and its tag
+            continue
+        if token.is_stop:
+            tag_idx += 1
+            continue
+
+        processed_tokens.append(token.lemma_)
+
+        if tag_idx < len(original_tags):
+            aligned_tags.append(original_tags[tag_idx])
+            tag_idx += 1
+        else:
+            aligned_tags.append(0)
+
+    return processed_tokens, aligned_tags
+
+def word2idx(embedding_dict, tweet):
+    indices = [embedding_dict[word] for word in tweet if word in embedding_dict]
+    if not indices:
+        indices = [0]  
+    return torch.tensor(indices)
+
+def collate_fn(batch) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    
+    glove = spacy.load('en_core_web_lg')
+    word_to_index = {word: i for i, word in enumerate(glove.vocab.strings)} 
+
+    # Ordenar por longitud de la secuencia (descendente)
+    batch = sorted(batch, key=lambda x: len(x[0]), reverse=True)
+    texts, labels, sa = zip(*batch)
+
+    # Convertir palabras a índices
+    texts_indx = [word2idx(word_to_index, text) for text in texts if word2idx(word_to_index, text).nelement() > 0]
+
+    # Longitudes de cada secuencia
+    lengths = torch.tensor([len(text) for text in texts_indx], dtype=torch.long)
+
+    # Padding a la misma longitud
+    texts_padded = pad_sequence(texts_indx, batch_first=True, padding_value=0)
+    tags_padded = pad_sequence(labels, batch_first=True, padding_value=0)
+
+    return texts_padded, tags_padded, sa, lengths
 
 class Accuracy:
     """

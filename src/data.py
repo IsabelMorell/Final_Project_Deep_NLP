@@ -4,9 +4,16 @@ from transformers import AutoModelForSequenceClassification
 from transformers import AutoTokenizer
 from scipy.special import softmax
 import numpy as np
+import torch
+import ast
+import pandas as pd
+from typing import Tuple, List
+from torch.utils.data import Dataset, DataLoader
 
 # other libraries
 import os
+
+from utils import fix_tags_string, process_sentence_and_align_tags, collate_fn
 
 MODEL = f"cardiffnlp/twitter-roberta-base-sentiment-latest"
 ENTITY2INDEX = {
@@ -48,6 +55,25 @@ ENTITY2INDEX = {
     "I-ORDINAL": 35,
     "I-LANGUAGE": 36
 }
+
+class OntoNotesDataset(Dataset):
+    def __init__(self, df: pd.DataFrame):
+        self.tokens = df["tokens"].tolist()
+
+        df["tags"] = df["tags"].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else x)
+        self.tags = [torch.tensor(t, dtype=torch.float32) for t in df["tags"].tolist()]
+        
+        self.SA: torch.Tensor = torch.tensor(df["SA"].values, dtype=torch.int)
+
+    def __len__(self) -> int:
+        """Returns the length of the dataset."""
+        return len(self.tokens)
+
+    def __getitem__(self, idx: int) -> Tuple[List[str], torch.Tensor, torch.Tensor]:
+        token: str = self.tokens[idx]
+        tag: torch.Tensor = self.tags[idx]
+        sa: torch.Tensor = self.SA[idx]
+        return token, tag, sa
 
 def download_data(path: str = "data"):
     """
@@ -108,4 +134,58 @@ def process_sentences(df):
     df["SA"] = df["sentence"].apply(analyze_sentiment)
     
     return df
+
+
+def load_data(batch_size: int):
+    if not os.path.exists("data"):
+        df_train, df_val, df_test = download_data()
+    else:
+        df_train = pd.read_csv("data/train.csv)")
+        df_val = pd.read_csv("data/val.csv)")
+        df_test = pd.read_csv("data/test.csv)")
+    
+    if "test_token.csv" not in os.listdir("data"):
+        df_train["tags"] = df_train["tags"].apply(fix_tags_string)
+        df_val["tags"] = df_val["tags"].apply(fix_tags_string)
+        df_test["tags"] = df_test["tags"].apply(fix_tags_string)
+
+
+        df_train[["tokens", "tags"]] = df_train.apply(
+            lambda row: pd.Series(process_sentence_and_align_tags(row["sentence"], row["tags"])), axis=1
+        )
+        df_val[["tokens", "tags"]] = df_val.apply(
+            lambda row: pd.Series(process_sentence_and_align_tags(row["sentence"], row["tags"])), axis=1
+        )
+        df_test[["tokens", "tags"]] = df_test.apply(
+            lambda row: pd.Series(process_sentence_and_align_tags(row["sentence"], row["tags"])), axis=1
+        )
+
+        df_train.to_csv(f"data/train_token.csv",index=False)
+        df_test.to_csv(f"data/test_token.csv",index=False)
+        df_val.to_csv(f"data/val_token.csv",index=False)
+    
+    else:
+        df_train = pd.read_csv("data/train_token.csv")
+        df_val = pd.read_csv("data/val_token.csv")
+        df_test = pd.read_csv("data/test_token.csv")
+
+        df_train["tokens"] = df_train["tokens"].apply(ast.literal_eval)
+        df_train["tags"] = df_train["tags"].apply(ast.literal_eval)
+
+        df_val["tokens"] = df_val["tokens"].apply(ast.literal_eval)
+        df_val["tags"] = df_val["tags"].apply(ast.literal_eval)
+
+        df_test["tokens"] = df_test["tokens"].apply(ast.literal_eval)
+        df_test["tags"] = df_test["tags"].apply(ast.literal_eval)
+
+    tr_dataset = OntoNotesDataset(df_train)
+    vl_dataset = OntoNotesDataset(df_val)
+    ts_dataset = OntoNotesDataset(df_test)
+
+    train_dataloader: DataLoader = DataLoader(tr_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn, drop_last=True)
+    val_dataloader: DataLoader = DataLoader(vl_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn, drop_last=True)
+    test_dataloader: DataLoader = DataLoader(ts_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn, drop_last=True)
+
+    return train_dataloader, val_dataloader, test_dataloader
+
 
