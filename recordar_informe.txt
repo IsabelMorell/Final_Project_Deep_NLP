@@ -1,0 +1,14 @@
+JUSTIFICACION DEL MODELO:
+- la LSTM de pytorch devuelve por defecto los hidden states concatenados (forward y backward pq es bidireccional)
+- Vamos a hacer una media de los hidden states porque estos contienen info de toda la frase y lo que queremos es
+clasificar la frase entera en SA
+
+- Si devolvemos ouputs, sentiments tendremos 2 errores/accuracy => bueno: podemos analizar que parte de las dos hace mejor el MODELO
+malo: cuenta como dos modelos independientes o como uno? 
+necesitaremos 2 errores (CrossEntropyLoss) (TRAIN.PY)
+
+- Linear: 
+    # in_features = hidden_size si media, 2*hidden_size si concatenación
+    # out_features = 3 pq tenemos 3 sentimientos (positivo, negativo y neutro)
+
+IDEA: si va mal una solo lineal en clasificacion, hacer una MLP
