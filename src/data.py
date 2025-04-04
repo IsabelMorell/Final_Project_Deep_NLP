@@ -136,13 +136,13 @@ def process_sentences(df):
     return df
 
 
-def load_data(batch_size: int):
+def load_data(batch_size: int=64):
     if not os.path.exists("data"):
         df_train, df_val, df_test = download_data()
     else:
-        df_train = pd.read_csv("data/train.csv)")
-        df_val = pd.read_csv("data/val.csv)")
-        df_test = pd.read_csv("data/test.csv)")
+        df_train = pd.read_csv("data/train.csv")
+        df_val = pd.read_csv("data/val.csv")
+        df_test = pd.read_csv("data/test.csv")
     
     if "test_token.csv" not in os.listdir("data"):
         df_train["tags"] = df_train["tags"].apply(fix_tags_string)
