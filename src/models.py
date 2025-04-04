@@ -81,8 +81,8 @@ class NERSA(torch.nn.Module):
         output_unpacked, _ = pad_packed_sequence(packed_output, batch_first=True)
 
         # Sentiment Analysis
-        last_hidden_state: torch.Tensor = hidden[-1, :, :]
+        pooled_hidden_state: torch.Tensor = hidden.mean(dim=0)  # [-1, :, :]
 
         # si con solo una lineal no funciona entonces pondremos un MLP
 
-        return self.fc_ner(output_unpacked), self.fc_sa(last_hidden_state)
+        return self.fc_ner(output_unpacked), self.fc_sa(pooled_hidden_state)
