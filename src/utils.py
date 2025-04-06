@@ -23,19 +23,53 @@ IRRELEVANT_WORDS = {"wow", "oops", "ah", "ugh", "yay", "mhm", "`"}
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
-def fix_tags_string(x):
+# HOLA SOY MARÍA, AQUÍ NO SE QUE PONER EN LO QUE DEVUELVE
+def fix_tags_string(x) -> List:
+    """
+    This function processes a string of comma-separated numbers and converts it into a list 
+    of integers. If the input is not a string, it returns the input unchanged.
+
+    Args:
+        x: a string containing comma-separated numbers.
+
+    Returns:
+        A list of integers if x is a string, otherwise returns the original input unchanged.
+    """
     if isinstance(x, str):
         x_clean = re.sub(r"\s+", ",", x.strip())
         nums = [int(n) for n in x_clean.strip("[]").split(",") if n.strip() != ""]
         return nums
     return x 
 
-def replace_contractions(text):
+def replace_contractions(text) -> str:
+    """
+    This function replaces the contractions present in the given text with their 
+    expanded form
+
+    Args:
+        text: string containing the sentence with contractions.
+
+    Returns:
+        string containing the text without contractions, replaced by their full forms.
+    """
     for contraction, replacement in CONTRACTIONS.items():
         text = re.sub(r"\b" + re.escape(contraction) + r"\b", replacement, text)
     return text
 
-def process_sentence_and_align_tags(sentence, original_tags):
+def process_sentence_and_align_tags(sentence, original_tags) -> Tuple[List, List]:
+    """
+    This function processes a sentence by removing contractions, punctuation, stop words,
+    and other irrelevant words. Then, aligns the given tags with the filtered tokens.
+
+    Args:
+        sentence: string with the raw input
+        original_tags: a list of tags corresponding to the original tokens in the sentence.
+
+    Returns:
+        Tuple containing:
+            - processed_tokens: a list of cleaned, lemmatized tokens.
+            - aligned_tags: a list of tags aligned with the processed tokens.
+    """
     nlp = spacy.load("en_core_web_sm")
 
     sentence = replace_contractions(sentence)
@@ -64,13 +98,43 @@ def process_sentence_and_align_tags(sentence, original_tags):
 
     return processed_tokens, aligned_tags
 
-def word2idx(embedding_dict, tweet):
+def word2idx(embedding_dict, tweet) -> torch.Tensor:
+    """
+    This function converts a list of words (a tweet) into a tensor of corresponding indices
+    using a given embedding dictionary.
+
+    Args:
+        embedding_dict: a dictionary mapping words to their corresponding indices.
+        tweet: a list of words (tokens) from a tweet.
+
+    Returns:
+        tensor containing the indices of the words in the tweet
+
+    """
     indices = [embedding_dict[word] for word in tweet if word in embedding_dict]
     if not indices:
         indices = [0]  
     return torch.tensor(indices)
 
 def collate_fn(batch) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """
+    This function processes a batch of samples for a DataLoader, preparing text sequences
+    and labels with padding and sorting by length.
+
+    Args:
+        batch: list of tuples where each tuple contains (text, label, sa)
+            - text: list of words (tokens)
+            - label: tensor with label indices
+            - sa: auxiliary information
+
+    Returns:
+        tuple containing:
+            - text_padded: padded tensor of word indices
+            - tags_padded: padded tensor of label indices
+            - sa: auxiliary information
+            - lengths: tensor of original sequence lengths.
+
+    """
     
     glove = spacy.load('en_core_web_lg')
     word_to_index = {word: i for i, word in enumerate(glove.vocab.strings)} 
