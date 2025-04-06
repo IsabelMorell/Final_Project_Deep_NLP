@@ -18,9 +18,9 @@ class NERSA(torch.nn.Module):
         Args:
             embedding_weights (torch.Tensor): Pre-trained word embeddings.
             hidden_size (int): hidden size of the layers.
+            num_layers (int): The number of layers in the LSTM.
             num_NER_labels (int): number of posible NER labels.
             num_SA_labels (int): number of sentiments.
-            num_layers (int): The number of layers in the LSTM.
             dropout (float):  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer, 
             with dropout probability equal to dropout
         """

@@ -181,8 +181,9 @@ class Accuracy:
         This method update the value of correct and total counts.
 
         Args:
-            logits: outputs of the model.
+            logits (torch.Tensor): outputs of the model.
                 Dimensions: [batch, number of classes]
+
             labels: labels of the examples. Dimensions: [batch].
         """
 
@@ -223,8 +224,8 @@ def save_model(model: torch.nn.Module, name: str) -> None:
     It should create the 'models' if it doesn't already exist.
 
     Args:
-        model: pytorch model.
-        name: name of the model (without the extension, e.g. name.pt).
+        model (torch.nn.Module): pytorch model.
+        name (str): name of the model (without the extension, e.g. name.pt).
     """
 
     # create folder if it does not exist
@@ -243,7 +244,7 @@ def load_model(name: str) -> RecursiveScriptModule:
     This function is to load a model from the 'models' folder.
 
     Args:
-        name: name of the model to load.
+        name (str): name of the model to load.
 
     Returns:
         model in torchscript.
@@ -260,7 +261,7 @@ def set_seed(seed: int) -> None:
     This function sets a seed and ensure a deterministic behavior.
 
     Args:
-        seed: seed number to fix radomness.
+        seed (int): seed number to fix radomness.
     """
 
     # set seed in numpy and random

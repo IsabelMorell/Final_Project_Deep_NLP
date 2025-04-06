@@ -57,7 +57,23 @@ ENTITY2INDEX = {
 }
 
 class OntoNotesDataset(Dataset):
+    """
+
+    This class is a custom PyTorch Dataset for the OntoNotes dataset.
+
+    Args:
+        df: A pandas DataFrame containing at least the columns 'tokens', 'tags', and 'SA'.
+
+    """
     def __init__(self, df: pd.DataFrame):
+
+        """
+        Initializes the dataset
+
+        Args:
+            df: A DataFrame containing 'tokens', 'tags', and 'SA' columns.
+
+        """
         self.tokens = df["tokens"].tolist()
 
         df["tags"] = df["tags"].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else x)
@@ -66,20 +82,45 @@ class OntoNotesDataset(Dataset):
         self.SA: torch.Tensor = torch.tensor(df["SA"].values, dtype=torch.int)
 
     def __len__(self) -> int:
-        """Returns the length of the dataset."""
+        """
+        Returns the length of the dataset (number of samples).
+        
+        Returns:
+            The number of samples (tokens) in the dataset.
+        """
         return len(self.tokens)
 
     def __getitem__(self, idx: int) -> Tuple[List[str], torch.Tensor, torch.Tensor]:
+        """
+        Retrieves the token sequence, associated tags, and sentiment label for a given index.
+        
+        Args:
+            idx: The index of the sample to retrieve.
+        
+        Returns:
+            A tuple containing:
+                - token: The list of tokens at the given index.
+                - tag: The tensor of tags associated with the tokens.
+                - sa: The sentiment analysis label for the sample.
+        """
         token: str = self.tokens[idx]
         tag: torch.Tensor = self.tags[idx]
         sa: torch.Tensor = self.SA[idx]
         return token, tag, sa
 
-def download_data(path: str = "data"):
+def download_data(path: str = "data") -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
-    
+    This function downloads the OntoNotes dataset, processes it, and saves the resulting data
+    as CSV files. The dataset is split into train, validation, and test sets.
+
     Args:
-        path (str): path where the data is going to be saved
+        path (str): The directory path where the data will be saved. Defaults to "data".
+        
+    Returns:
+        A tuple containing three DataFrames:
+            - df_train: The processed training data.
+            - df_val: The processed validation data.
+            - df_test: The processed test data.
     """
     if not os.path.exists(path):
         os.makedirs(path)
@@ -104,7 +145,17 @@ def download_data(path: str = "data"):
     return df_train, df_val, df_test
 
 # Preprocess text (username and link placeholders)
-def preprocess(text):
+def preprocess(text:str) -> str:
+    """
+    This function processes a given text by replacing usernames (starting with '@') with 
+    the placeholder '@user', and URLs (starting with 'http') with the placeholder 'http'.
+    
+    Args:
+        text (str): The input text to preprocess.
+
+    Returns:
+        str: The preprocessed text with usernames and links replaced by placeholders.
+    """
     new_text = []
     for t in text.split(" "):
         t = '@user' if t.startswith('@') and len(t) > 1 else t
@@ -112,7 +163,18 @@ def preprocess(text):
         new_text.append(t)
     return " ".join(new_text)
 
-def analyze_sentiment(sentence):
+def analyze_sentiment(sentence:str) -> int:
+    """
+    This function performs sentiment analysis on a given sentence by preprocessing it, 
+    tokenizing it, passing it through a pre-trained model, and returning the index of 
+    the highest sentiment score.
+
+    Args:
+        sentence (str): The input sentence to analyze.
+
+    Returns:
+        int: The index of the highest sentiment score, indicating the sentiment classification.
+    """
     tokenizer = AutoTokenizer.from_pretrained(MODEL)
     model = AutoModelForSequenceClassification.from_pretrained(MODEL)
 
@@ -126,7 +188,18 @@ def analyze_sentiment(sentence):
     ranking = ranking[::-1]
     return ranking[0]
         
-def process_sentences(df):
+def process_sentences(df:pd.DataFrame) -> pd.DataFrame:
+    """
+    This function processes a DataFrame by generating a 'sentence' column from the 'tokens' column 
+    and applies sentiment analysis to each sentence to create a new 'SA' column with sentiment labels.
+
+    Args:
+        df (pd.DataFrame): The input DataFrame containing a 'tokens' column.
+
+    Returns:
+        pd.DataFrame: The processed DataFrame with new 'sentence' and 'SA' columns.
+    """
+
     # Crear la columna 'sentence' uniendo los tokens
     df["sentence"] = df["tokens"].apply(lambda x: " ".join(x))
 
@@ -136,7 +209,19 @@ def process_sentences(df):
     return df
 
 
-def load_data(batch_size: int=64):
+def load_data(batch_size: int=64) -> Tuple[DataLoader, DataLoader, DataLoader]:
+    """
+    This function loads and processes the OntoNotes dataset. It downloads the data if it's not 
+    available locally, preprocesses it, and returns PyTorch DataLoader objects for training, validation, 
+    and testing datasets.
+
+    Args:
+        batch_size (int): The batch size to use for the DataLoader. Defaults to 64.
+
+    Returns:
+        Tuple[DataLoader, DataLoader, DataLoader]: A tuple containing the DataLoader for training, 
+        validation, and testing datasets.
+    """
     if not os.path.exists("data"):
         df_train, df_val, df_test = download_data()
     else:
