@@ -13,7 +13,7 @@ from torch.utils.data import Dataset, DataLoader
 # other libraries
 import os
 
-from utils import fix_tags_string, process_sentence_and_align_tags, collate_fn
+from src.utils import fix_tags_string, process_sentence_and_align_tags, collate_fn
 
 MODEL = f"cardiffnlp/twitter-roberta-base-sentiment-latest"
 ENTITY2INDEX = {
@@ -209,7 +209,7 @@ def process_sentences(df:pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def load_data(batch_size: int=64) -> Tuple[DataLoader, DataLoader, DataLoader]:
+def load_data(batch_size: int=64, num_workers: int = 0) -> Tuple[DataLoader, DataLoader, DataLoader]:
     """
     This function loads and processes the OntoNotes dataset. It downloads the data if it's not 
     available locally, preprocesses it, and returns PyTorch DataLoader objects for training, validation, 
@@ -267,9 +267,9 @@ def load_data(batch_size: int=64) -> Tuple[DataLoader, DataLoader, DataLoader]:
     vl_dataset = OntoNotesDataset(df_val)
     ts_dataset = OntoNotesDataset(df_test)
 
-    train_dataloader: DataLoader = DataLoader(tr_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn, drop_last=True)
-    val_dataloader: DataLoader = DataLoader(vl_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn, drop_last=True)
-    test_dataloader: DataLoader = DataLoader(ts_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn, drop_last=True)
+    train_dataloader: DataLoader = DataLoader(tr_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn, drop_last=True, num_workers=num_workers)
+    val_dataloader: DataLoader = DataLoader(vl_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn, drop_last=True, num_workers=num_workers)
+    test_dataloader: DataLoader = DataLoader(ts_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn, drop_last=True, num_workers=num_workers)
 
     return train_dataloader, val_dataloader, test_dataloader
 

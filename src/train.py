@@ -8,6 +8,7 @@ from tqdm.auto import tqdm
 from typing import Final
 import spacy
 import torch
+import numpy as np
 
 # own modules
 from src.data import load_data, ENTITY2INDEX
@@ -39,18 +40,19 @@ def main() -> None:
     weight_decay: float = 1e-4
     batch_size: int = 128
     hidden_size: int = 64
-    num_layers: int = 3
+    num_layers: int = 1
     dropout: float = 0.3
 
     # load data
     train_data: DataLoader
     val_data: DataLoader
-    train_data, val_data, _ = load_data(DATA_PATH, batch_size=batch_size, num_workers=4)
+    train_data, val_data, _ = load_data(batch_size=batch_size, num_workers=4)
 
     # TODO: define embedding weights
     vocab = [word.text for word in nlp.vocab if word.has_vector and word.is_alpha]
     vectors = [nlp.vocab[word].vector for word in vocab]
-    embedding_weights = torch.tensor(vectors)
+    vectors_np = np.array(vectors)
+    embedding_weights = torch.tensor(vectors_np)
 
     # define name and writer
     name: str = f"model_lr_{lr}_hs_{hidden_size}_{batch_size}_{epochs}_{step_size}"
