@@ -6,6 +6,8 @@ from torch.utils.tensorboard import SummaryWriter
 # other libraries
 from tqdm.auto import tqdm
 from typing import Final
+import spacy
+import torch
 
 # own modules
 from src.data import load_data, ENTITY2INDEX
@@ -20,6 +22,8 @@ torch.set_num_threads(8)
 
 # static variables
 DATA_PATH: Final[str] = "data"
+
+nlp = spacy.load('en_core_web_lg')
 
 def main() -> None:
     """
@@ -44,7 +48,9 @@ def main() -> None:
     train_data, val_data, _ = load_data(DATA_PATH, batch_size=batch_size, num_workers=4)
 
     # TODO: define embedding weights
-    embedding_weights: torch.Tensor
+    vocab = [word.text for word in nlp.vocab if word.has_vector and word.is_alpha]
+    vectors = [nlp.vocab[word].vector for word in vocab]
+    embedding_weights = torch.tensor(vectors)
 
     # define name and writer
     name: str = f"model_lr_{lr}_hs_{hidden_size}_{batch_size}_{epochs}_{step_size}"
