@@ -47,7 +47,7 @@ def main() -> None:
     val_data: DataLoader
     train_data, val_data, _ = load_data(DATA_PATH, batch_size=batch_size, num_workers=4)
 
-    # TODO: define embedding weights
+    # define embedding weights
     vocab = [word.text for word in nlp.vocab if word.has_vector and word.is_alpha]
     vectors = [nlp.vocab[word].vector for word in vocab]
     embedding_weights = torch.tensor(vectors)
