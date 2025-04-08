@@ -24,7 +24,7 @@ torch.set_num_threads(8)
 # static variables
 DATA_PATH: Final[str] = "data"
 
-nlp = spacy.load('en_core_web_lg')
+glove = spacy.load('en_core_web_lg')
 
 def main() -> None:
     """
@@ -49,8 +49,8 @@ def main() -> None:
     train_data, val_data, _ = load_data(batch_size=batch_size, num_workers=4)
 
     # define embedding weights
-    vocab = [word.text for word in nlp.vocab if word.has_vector and word.is_alpha]
-    vectors = [nlp.vocab[word].vector for word in vocab]
+    vocab = [word.text for word in glove.vocab if word.has_vector and word.is_alpha]
+    vectors = [glove.vocab[word].vector for word in vocab]
     vectors_np = np.array(vectors)
     embedding_weights = torch.tensor(vectors_np)
 
