@@ -26,6 +26,9 @@ class NERSA(torch.nn.Module):
         """
         super().__init__()
 
+        self.num_layers = num_layers
+        self.hidden_size = hidden_size
+
         # Determine the embedding dimension from the embedding weights
         embedding_dim: int = embedding_weights.shape[1]
 
@@ -81,8 +84,16 @@ class NERSA(torch.nn.Module):
         output_unpacked, _ = pad_packed_sequence(packed_output, batch_first=True)
 
         # Sentiment Analysis
-        pooled_hidden_state: torch.Tensor = hidden.mean(dim=0)  # [-1, :, :]
+        #pooled_hidden_state: torch.Tensor = hidden.mean(dim=0)  # [-1, :, :]
+        forward = hidden[-2, :, :]  # [batch, 64]
+        backward = hidden[-1, :, :]  # [batch, 64]
+        pooled_hidden_state = torch.cat((forward, backward), dim=1)
+        pooled_hidden_state_mean = pooled_hidden_state.mean(dim=1)
 
         # si con solo una lineal no funciona entonces pondremos un MLP
+        print(output_unpacked.shape)
 
-        return self.fc_ner(output_unpacked), self.fc_sa(pooled_hidden_state)
+        linear_ner: torch.Tensor = self.fc_ner(output_unpacked)
+        print(linear_ner.shape)
+        linear_sa: torch.Tensor = self.fc_sa(pooled_hidden_state_mean)
+        return linear_ner, linear_sa
