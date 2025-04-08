@@ -136,10 +136,8 @@ def collate_fn(batch) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
 
     """
     
-    glove = spacy.load('en_core_web_lg')
-    vocab = [word.text for word in glove.vocab if word.has_vector and word.is_alpha]
-    word_to_index = {word: i for i, word in enumerate(vocab)}
-    #word_to_index = {word: i for i, word in enumerate(glove.vocab.strings)} 
+    glove = spacy.load('en_core_web_lg') 
+    word_to_index = {word: i for i, word in enumerate(glove.vocab.strings)}
 
     # Ordenar por longitud de la secuencia (descendente)
     batch = sorted(batch, key=lambda x: len(x[0]), reverse=True)
@@ -148,12 +146,12 @@ def collate_fn(batch) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     # Convertir palabras a índices
     texts_indx = [word2idx(word_to_index, text) for text in texts if word2idx(word_to_index, text).nelement() > 0]
 
-    # Longitudes de cada secuencia
-    lengths = torch.tensor([len(text) for text in texts_indx], dtype=torch.long)
-
     # Padding a la misma longitud
     texts_padded = pad_sequence(texts_indx, batch_first=True, padding_value=0)
     tags_padded = pad_sequence(labels, batch_first=True, padding_value=0)
+
+    # Longitudes de cada secuencia
+    lengths = torch.tensor([len(text) for text in texts_padded], dtype=torch.long)
 
     sa_tensor = torch.tensor(sa, dtype=torch.long)
 
