@@ -46,8 +46,8 @@ def train_step(
 
         outputs, sa = model(sentences, text_len)
 
-        loss_value_ner = loss_ner(outputs, ner_labels.long())
-        loss_value_sa = loss_sa(sa, sentiment.long())
+        loss_value_ner = loss_ner(outputs, ner_labels)
+        loss_value_sa = loss_sa(sa, sentiment)
 
         loss_value = loss_value_ner + loss_value_sa
 
@@ -108,8 +108,8 @@ def val_step(
 
             outputs, sa = model(sentences, text_len)
 
-            loss_value_ner = loss_ner(outputs, ner_labels.long())
-            loss_value_sa = loss_sa(sa, sentiment.long())
+            loss_value_ner = loss_ner(outputs, ner_labels)
+            loss_value_sa = loss_sa(sa, sentiment)
 
             losses_ner.append(loss_value_ner.item())
             losses_sa.append(loss_value_sa.item())

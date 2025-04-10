@@ -21,6 +21,49 @@ CONTRACTIONS = {
 }
 IRRELEVANT_WORDS = {"wow", "oops", "ah", "ugh", "yay", "mhm", "`"}
 
+ENTITY2INDEX = {
+    "O": 0,
+    "B-CARDINAL": 1,
+    "B-DATE": 2,
+    "I-DATE": 3,
+    "B-PERSON": 4,
+    "I-PERSON": 5,
+    "B-NORP": 6,
+    "B-GPE": 7,
+    "I-GPE": 8,
+    "B-LAW": 9,
+    "I-LAW": 10,
+    "B-ORG": 11,
+    "I-ORG": 12, 
+    "B-PERCENT": 13,
+    "I-PERCENT": 14, 
+    "B-ORDINAL": 15, 
+    "B-MONEY": 16, 
+    "I-MONEY": 17, 
+    "B-WORK_OF_ART": 18, 
+    "I-WORK_OF_ART": 19, 
+    "B-FAC": 20, 
+    "B-TIME": 21, 
+    "I-CARDINAL": 22, 
+    "B-LOC": 23, 
+    "B-QUANTITY": 24, 
+    "I-QUANTITY": 25, 
+    "I-NORP": 26, 
+    "I-LOC": 27, 
+    "B-PRODUCT": 28, 
+    "I-TIME": 29, 
+    "B-EVENT": 30,
+    "I-EVENT": 31,
+    "I-FAC": 32,
+    "B-LANGUAGE": 33,
+    "I-PRODUCT": 34,
+    "I-ORDINAL": 35,
+    "I-LANGUAGE": 36
+}
+
+NUM_NER_CLASSES = 37
+NUM_SA_CLASSES = 3
+
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 # HOLA SOY MARÍA, AQUÍ NO SE QUE PONER EN LO QUE DEVUELVE
@@ -136,8 +179,8 @@ def collate_fn(batch) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
 
     """
     
-    glove = spacy.load('en_core_web_lg') 
-    word_to_index = {word: i for i, word in enumerate(glove.vocab.strings)}
+    glove = spacy.load('en_core_web_lg')
+    word_to_index = {word: i for i, word in enumerate(glove.vocab.strings)} 
 
     # Ordenar por longitud de la secuencia (descendente)
     batch = sorted(batch, key=lambda x: len(x[0]), reverse=True)
@@ -148,14 +191,29 @@ def collate_fn(batch) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
 
     # Padding a la misma longitud
     texts_padded = pad_sequence(texts_indx, batch_first=True, padding_value=0)
-    tags_padded = pad_sequence(labels, batch_first=True, padding_value=0)
+    tags_padded = pad_sequence(labels, batch_first=True, padding_value=ENTITY2INDEX["O"]).long()
 
     # Longitudes de cada secuencia
     lengths = torch.tensor([len(text) for text in texts_padded], dtype=torch.long)
+    
+    # One hot NER
+    batch_size, max_len = tags_padded.shape
+    tags_onehot = torch.zeros((batch_size, max_len, NUM_NER_CLASSES), dtype=torch.float)
 
-    sa_tensor = torch.tensor(sa, dtype=torch.long)
+    for i in range(batch_size):
+        for j in range(lengths[i]):
+            label_idx = tags_padded[i, j].item()
+            tags_onehot[i, j, label_idx] = 1.0
+        
+    # One hot SA
+    batch_size = len(sa)
+    sa_onehot = torch.zeros((batch_size, NUM_SA_CLASSES), dtype=torch.float)
 
-    return texts_padded, tags_padded, sa_tensor, lengths
+    for i in range(batch_size):
+        label_idx = sa[i].item()
+        sa_onehot[i, label_idx] = 1.0
+
+    return texts_padded, tags_onehot, sa_onehot.unsqueeze(1), lengths
 
 class Accuracy:
     """
