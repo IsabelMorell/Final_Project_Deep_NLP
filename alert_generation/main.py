@@ -1,15 +1,18 @@
 import utils as u
 import os
 
+current_folder = os.getcwd()
+
 paths = [
-    "Ejercicios/Ejercicio_1/enunciado.txt",  # [E] Enunciado
+    f"",  # [E] Enunciado
 ]
 
 placeholder = [
-    "[E]"
+    "[S]",  # sentiment of the sentence
+    "[N]"  # Sentence + NER tags
 ]
 
-def sustituir_prompt(prompt: str, paths: list, placeholders: list) -> str:
+def sustituir_prompt(prompt: str, sentence_ner: str, sa: str, placeholders: list) -> str:
     """
     Reemplaza los placeholders en el prompt con el contenido de los archivos en paths.
     
@@ -22,16 +25,17 @@ def sustituir_prompt(prompt: str, paths: list, placeholders: list) -> str:
 
     # Loop through the placeholders and replace them in the prompt
     for i in range(len(placeholders)):
-        # Read the content of each file
-        with open(paths[i], 'r', encoding='utf-8') as file:
-            content = file.read()
+        if placeholder[i] == "[S]":
+            content = sa
+        else:
+            content = sentence_ner
         
-        # Replace the placeholder with the file content
+        # Replace the placeholder with the corresponding content
         prompt = prompt.replace(placeholders[i], content)
     
     return prompt
 
-def abrir_y_ejecutar_prompt():
+def abrir_y_ejecutar_prompt(sentence_ner: str, sa: str):
     # Leer el contenido del archivo 'prompt.txt' que está en la carpeta actual
     try:
         with open('prompt.txt', 'r', encoding='utf-8') as file:
@@ -43,10 +47,10 @@ def abrir_y_ejecutar_prompt():
         print(f"Error al leer el archivo 'prompt.txt': {e}")
         return
     
-    prompt_sustituido = sustituir_prompt(prompt, paths, placeholder)
+    prompt_sustituido = sustituir_prompt(prompt, sentence_ner, sa, paths, placeholder)
     
     # Obtener los modelos disponibles
-    models = u.get_available_models()
+    models = u.get_available_models()[0:-4]
     if not models:
         print("No se encontraron modelos disponibles.")
         return
@@ -56,9 +60,26 @@ def abrir_y_ejecutar_prompt():
         u.delete_history()
         print(f"Ejecutando para el modelo: {model}")
         try:
-            u.prompt_model(model, prompt_sustituido)
+            response = u.prompt_model(model, prompt_sustituido)
+            return response
         except Exception as e:
             print(f"Error al ejecutar para el modelo {model}: {e}")
 
 if __name__ == "__main__":
-    abrir_y_ejecutar_prompt()
+    # 1. Pasar frase original por el modelo
+    # ner_logits, sa_logits = model(...)
+
+    # 2. Sacar NER mas probable por palabra y recuperar la tag asociada al indice
+
+    # 3. Sacar SA mas probable y su tag asociado
+    sa = "negative"
+    # 4. Funcion que añade las etiquetas a la frase
+
+    sentence_ner = "Child (B-PER) murdered (O) in (O) Florida (B-LOC)"
+
+    try:
+        response = abrir_y_ejecutar_prompt(sentence_ner, sa)
+        print("RESPONSE")
+        print(response)
+    except Exception as error:
+        print("ERROR:", error)
