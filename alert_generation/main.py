@@ -1,12 +1,6 @@
 import utils as u
 import os
 
-current_folder = os.getcwd()
-
-paths = [
-    f"",  # [E] Enunciado
-]
-
 placeholder = [
     "[S]",  # sentiment of the sentence
     "[N]"  # Sentence + NER tags
