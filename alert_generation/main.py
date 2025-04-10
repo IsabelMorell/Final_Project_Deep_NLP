@@ -1,5 +1,48 @@
 import utils as u
 import os
+import torch
+
+ENTITY2INDEX = {
+    "O": 0,
+    "B-CARDINAL": 1,
+    "B-DATE": 2,
+    "I-DATE": 3,
+    "B-PERSON": 4,
+    "I-PERSON": 5,
+    "B-NORP": 6,
+    "B-GPE": 7,
+    "I-GPE": 8,
+    "B-LAW": 9,
+    "I-LAW": 10,
+    "B-ORG": 11,
+    "I-ORG": 12, 
+    "B-PERCENT": 13,
+    "I-PERCENT": 14, 
+    "B-ORDINAL": 15, 
+    "B-MONEY": 16, 
+    "I-MONEY": 17, 
+    "B-WORK_OF_ART": 18, 
+    "I-WORK_OF_ART": 19, 
+    "B-FAC": 20, 
+    "B-TIME": 21, 
+    "I-CARDINAL": 22, 
+    "B-LOC": 23, 
+    "B-QUANTITY": 24, 
+    "I-QUANTITY": 25, 
+    "I-NORP": 26, 
+    "I-LOC": 27, 
+    "B-PRODUCT": 28, 
+    "I-TIME": 29, 
+    "B-EVENT": 30,
+    "I-EVENT": 31,
+    "I-FAC": 32,
+    "B-LANGUAGE": 33,
+    "I-PRODUCT": 34,
+    "I-ORDINAL": 35,
+    "I-LANGUAGE": 36
+}
+
+SA2INDEX = {"negative": 0, "neutral": 1, "positive": 2}
 
 placeholder = [
     "[S]",  # sentiment of the sentence
@@ -41,7 +84,7 @@ def abrir_y_ejecutar_prompt(sentence_ner: str, sa: str):
         print(f"Error al leer el archivo 'prompt.txt': {e}")
         return
     
-    prompt_sustituido = sustituir_prompt(prompt, sentence_ner, sa, paths, placeholder)
+    prompt_sustituido = sustituir_prompt(prompt, sentence_ner, sa, placeholder)
     
     # Obtener los modelos disponibles
     models = u.get_available_models()[0:-4]
@@ -54,22 +97,44 @@ def abrir_y_ejecutar_prompt(sentence_ner: str, sa: str):
         u.delete_history()
         print(f"Ejecutando para el modelo: {model}")
         try:
-            response = u.prompt_model(model, prompt_sustituido)
+            response = u.prompt_model(model, prompt_sustituido, ".")
             return response
         except Exception as e:
             print(f"Error al ejecutar para el modelo {model}: {e}")
 
+def return_index2label(label2index: dict) -> dict:
+    index2label = {}
+    for label in label2index:
+        index = label2index[label]
+        index2label[index] = label
+    return index2label
+
+def most_probable_entity(logits: torch.Tensor, index2entity: dict) -> str:
+    idx_most_probable: int = torch.argmax(logits).to(int).item()
+    entity: str = index2entity[idx_most_probable]
+    return entity
+
+
 if __name__ == "__main__":
+    INDEX2ENTITY = return_index2label(ENTITY2INDEX)
+    INDEX2SA = return_index2label(SA2INDEX)
+    sentence = "hi"
     # 1. Pasar frase original por el modelo
     # ner_logits, sa_logits = model(...)
 
     # 2. Sacar NER mas probable por palabra y recuperar la tag asociada al indice
+    ner_tags: list = [most_probable_entity(ner_logits[i, :], INDEX2ENTITY) for i, word in enumerate(sentence.split(" "))]
 
     # 3. Sacar SA mas probable y su tag asociado
-    sa = "negative"
+    #sa = "negative"
+    #sa = "positive"
+    sa_tag: str = most_probable_entity(sa_logits, INDEX2SA)
+
+
     # 4. Funcion que añade las etiquetas a la frase
 
-    sentence_ner = "Child (B-PER) murdered (O) in (O) Florida (B-LOC)"
+    #sentence_ner = "Child (B-PER) murdered (O) in (O) Florida (B-LOC)"
+    sentence_ner = "Gay (B-EVENT) marriage (I-EVENT) has (O) been (O) legalized (O) in (O) England (B-LOC)!"
 
     try:
         response = abrir_y_ejecutar_prompt(sentence_ner, sa)
