@@ -1,0 +1,9 @@
+Generate an alert of the following sentence knowing that the data in parenthesis is an Named-entity tag
+and that the sentiment of the sentece is SA = negative
+
+### SENTENCE
+"Child (B-PER) murdered in Florida (B-LOC)"
+
+### EXAMPLE
+An example of an alert is for the inputs: “Musk (B-PERSON) accused of giving Nazi (B-ORG) salute during Trump (B-PERSON) inauguration (B-EVENT) celebrations (I-EVENT)" SA = negative
+output: " REPUTATION RISK: Musk mentioned NEGATIVELY"
