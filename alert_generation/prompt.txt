@@ -1,5 +1,7 @@
 Generate an alert of the following sentence knowing that the data in parenthesis is an Named-entity tag
-and that the sentiment of the sentece is SA = [S]
+and that the sentiment of the sentece is SA = [S]. You can use different alert sentences as long as 
+you mention something related to the entity type of the subject and something related with the SA of
+the phrase.
 
 ### SENTENCE
 [N]
