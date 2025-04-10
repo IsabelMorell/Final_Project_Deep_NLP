@@ -114,27 +114,35 @@ def most_probable_entity(logits: torch.Tensor, index2entity: dict) -> str:
     entity: str = index2entity[idx_most_probable]
     return entity
 
+def add_ner_to_sentence(sentence: str, ner_tags: list) -> str:
+    ner_sentence = ""
+    for i, word in enumerate(sentence.split(" ")):
+        ner_sentence += f"{word} ({ner_tags[i]})"
+        if i != (len(ner_tags) - 1):
+            ner_sentence += " "
+
+    return ner_sentence
+
 
 if __name__ == "__main__":
     INDEX2ENTITY = return_index2label(ENTITY2INDEX)
     INDEX2SA = return_index2label(SA2INDEX)
     sentence = "hi"
     # 1. Pasar frase original por el modelo
-    # ner_logits, sa_logits = model(...)
+    ner_logits, sa_logits = model()
 
     # 2. Sacar NER mas probable por palabra y recuperar la tag asociada al indice
     ner_tags: list = [most_probable_entity(ner_logits[i, :], INDEX2ENTITY) for i, word in enumerate(sentence.split(" "))]
 
     # 3. Sacar SA mas probable y su tag asociado
-    #sa = "negative"
-    #sa = "positive"
-    sa_tag: str = most_probable_entity(sa_logits, INDEX2SA)
-
+    # sa = "negative"
+    # sa = "positive"
+    sa: str = most_probable_entity(sa_logits, INDEX2SA)
 
     # 4. Funcion que añade las etiquetas a la frase
-
-    #sentence_ner = "Child (B-PER) murdered (O) in (O) Florida (B-LOC)"
-    sentence_ner = "Gay (B-EVENT) marriage (I-EVENT) has (O) been (O) legalized (O) in (O) England (B-LOC)!"
+    # sentence_ner = "Child (B-PER) murdered (O) in (O) Florida (B-LOC)"
+    # sentence_ner = "Gay (B-EVENT) marriage (I-EVENT) has (O) been (O) legalized (O) in (O) England (B-LOC)!"
+    sentence_ner = add_ner_to_sentence(sentence, ner_tags)
 
     try:
         response = abrir_y_ejecutar_prompt(sentence_ner, sa)
