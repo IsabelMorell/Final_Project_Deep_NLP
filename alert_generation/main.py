@@ -127,7 +127,7 @@ def add_ner_to_sentence(sentence: str, ner_tags: list) -> str:
 if __name__ == "__main__":
     INDEX2ENTITY = return_index2label(ENTITY2INDEX)
     INDEX2SA = return_index2label(SA2INDEX)
-    sentence = "hi"
+    sentence = "Child murdered in Florida"
     # 1. Pasar frase original por el modelo
     ner_logits, sa_logits = model()
 
