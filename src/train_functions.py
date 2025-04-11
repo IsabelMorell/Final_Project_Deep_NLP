@@ -44,9 +44,12 @@ def train_step(
         ner_labels = ner_labels.to(device)
         sentiment = sentiment.to(device)
 
+        if text_len[0] != ner_labels.shape[1]:
+            print("Debuguear aqui")
+
         outputs, sa = model(sentences, text_len)
 
-        loss_value_ner = loss_ner(outputs, ner_labels)
+        loss_value_ner = loss_ner(outputs, ner_labels[:,:text_len[0],:])
         loss_value_sa = loss_sa(sa, sentiment)
 
         loss_value = loss_value_ner + loss_value_sa

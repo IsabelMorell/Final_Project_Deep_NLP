@@ -187,18 +187,26 @@ def collate_fn(batch) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     texts, labels, sa = zip(*batch)
 
     # Convertir palabras a índices
-    texts_indx = [word2idx(word_to_index, text) for text in texts if word2idx(word_to_index, text).nelement() > 0]
+    # texts_indx = [word2idx(word_to_index, text) for text in texts if word2idx(word_to_index, text).nelement() > 0]
+    
+    texts_indx = []
+    labels_indx = []
+    for i, text in enumerate(texts):
+        word_2_idx = word2idx(word_to_index, text)
+        if word_2_idx.nelement() > 0:
+            texts_indx.append(word_2_idx)
+            labels_indx.append(labels[i])
 
     # Padding a la misma longitud
     texts_padded = pad_sequence(texts_indx, batch_first=True, padding_value=0)
-    tags_padded = pad_sequence(labels, batch_first=True, padding_value=ENTITY2INDEX["O"]).long()
+    tags_padded = pad_sequence(labels_indx, batch_first=True, padding_value=ENTITY2INDEX["O"]).long()
 
     # Longitudes de cada secuencia
     lengths = torch.tensor([len(text) for text in texts_padded], dtype=torch.long)
     
     # One hot NER
     batch_size, max_len = tags_padded.shape
-    tags_onehot = torch.zeros((batch_size, max_len, NUM_NER_CLASSES), dtype=torch.float)
+    tags_onehot = torch.zeros((batch_size, lengths[0], NUM_NER_CLASSES), dtype=torch.float)
 
     for i in range(batch_size):
         for j in range(lengths[i]):
@@ -213,7 +221,7 @@ def collate_fn(batch) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         label_idx = sa[i].item()
         sa_onehot[i, label_idx] = 1.0
 
-    return texts_padded, tags_onehot, sa_onehot.unsqueeze(1), lengths
+    return texts_padded, tags_onehot, sa_onehot, lengths
 
 class Accuracy:
     """
@@ -249,6 +257,7 @@ class Accuracy:
 
         # compute predictions
         predictions = logits.argmax(1).type_as(labels)
+        labels = labels.argmax(1).type_as(labels)
 
         # update counts
         self.correct += int(predictions.eq(labels).sum().item())
