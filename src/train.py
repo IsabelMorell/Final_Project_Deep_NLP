@@ -34,19 +34,19 @@ def main() -> None:
     num_SA_labels: int = 3
 
     # hyperparameters
-    epochs: int = 100
-    step_size: int = 80
+    epochs: int = 50
+    step_size: int = 40
     lr: float = 1e-3
-    weight_decay: float = 1e-4
+    weight_decay: float = 1e-3
     batch_size: int = 128
-    hidden_size: int = 64
-    num_layers: int = 1
+    hidden_size: int = 128
+    num_layers: int = 2
     dropout: float = 0.3
 
     # load data
     train_data: DataLoader
     val_data: DataLoader
-    train_data, val_data, _ = load_data(batch_size=batch_size, num_workers=4)
+    train_data, val_data, _ = load_data(batch_size=batch_size)
 
     # define embedding weights
     vectors = [glove.vocab[word].vector for word in glove.vocab.strings]
@@ -54,11 +54,12 @@ def main() -> None:
     embedding_weights = torch.tensor(vectors_np)
 
     # define name and writer
-    name: str = f"model_lr_{lr}_hs_{hidden_size}_{batch_size}_{epochs}_{step_size}"
+    name: str = f"model_lr_{lr}_hs_{hidden_size}_{batch_size}_{epochs}_{step_size}_{num_layers}"
     writer: SummaryWriter = SummaryWriter(f"runs/{name}")
 
     # define model
     model: torch.nn.Module = NERSA(embedding_weights=embedding_weights, hidden_size=hidden_size, num_layers=num_layers, num_NER_labels=num_NER_labels, num_SA_labels=num_SA_labels, dropout=dropout)
+    model.to(device)
 
     # define losses, optimizer and scheduler
     loss_ner: torch.nn.Module = torch.nn.CrossEntropyLoss()
