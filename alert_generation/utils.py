@@ -8,8 +8,10 @@ import json
 import re
 import os
 
+from typing import List, Dict
 
-messages = []
+
+messages: List[Dict[str, str]] = []
 
 
 def get_available_models(api_url: str = "http://localhost:11434/api/tags") -> list[str]:

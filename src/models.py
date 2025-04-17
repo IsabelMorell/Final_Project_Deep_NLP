@@ -2,6 +2,9 @@
 import torch
 from torch.nn.utils.rnn import pad_packed_sequence, pack_padded_sequence, PackedSequence
 
+# other libraries
+from typing import Tuple
+
 class NERSA(torch.nn.Module):
     def __init__(
         self,
@@ -45,7 +48,7 @@ class NERSA(torch.nn.Module):
         self.fc_sa: torch.nn.Linear = torch.nn.Linear(in_features=2*hidden_size, out_features=num_SA_labels)  
 
 
-    def forward(self, inputs: torch.Tensor, text_lengths: torch.Tensor) -> torch.Tensor:
+    def forward(self, inputs: torch.Tensor, text_lengths: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         This method returns a batch of logits. It is the output of the
         neural network.
