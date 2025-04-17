@@ -97,7 +97,7 @@ def abrir_y_ejecutar_prompt(sentence_ner: str, sa: str):
         u.delete_history()
         print(f"Ejecutando para el modelo: {model}")
         try:
-            response = u.prompt_model(model, prompt_sustituido, ".")
+            response = u.prompt_model(model, prompt_sustituido, path=".")
             return response
         except Exception as e:
             print(f"Error al ejecutar para el modelo {model}: {e}")

@@ -65,7 +65,7 @@ class OntoNotesDataset(Dataset):
                 - tag: The tensor of tags associated with the tokens.
                 - sa: The sentiment analysis label for the sample.
         """
-        token: str = self.tokens[idx]
+        token: List[str] = self.tokens[idx]
         tag: torch.Tensor = self.tags[idx]
         sa: torch.Tensor = self.SA[idx]
         return token, tag, sa

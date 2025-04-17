@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader
 from torch.jit import RecursiveScriptModule
 
 # other libraries
-from typing import Final
+from typing import Final, Tuple
 
 # own modules
 from src.data import load_data
@@ -18,17 +18,19 @@ set_seed(42)
 # static variables
 DATA_PATH: Final[str] = "data"
 
-def main(name: str) -> float:
+def evaluate(name: str) -> Tuple[float, float]:
     """
     This function is the main program for the testing.
     """
 
     batch_size: int = 128
     # load data
-    _, _, test_data = load_data(DATA_PATH, batch_size=batch_size)
+    test_data: DataLoader
+    _, _, test_data = load_data(batch_size=batch_size)
 
     # define model
     model: RecursiveScriptModule = load_model(name)
+    model.to(device)
 
     # call test step and evaluate accuracy
     test_accuracy_ner: Accuracy = Accuracy()
@@ -41,6 +43,8 @@ def main(name: str) -> float:
 
 
 if __name__ == "__main__":
-    accuracy_ner, accuracy_sa = main('best_model')
+    accuracy_ner: float
+    accuracy_sa: float
+    accuracy_ner, accuracy_sa = evaluate('best_model')
     print(f"accuracy_ner: {accuracy_ner}")
     print(f"accuracy_sa: {accuracy_sa}")

@@ -4,6 +4,10 @@ import numpy as np
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
+# other libraries
+from typing import Tuple
+
+# own modules
 from src.utils import Accuracy
 
 def train_step(
@@ -131,7 +135,7 @@ def t_step(
     device: torch.device,
     test_accuracy_ner: Accuracy,
     test_accuracy_sa: Accuracy,
-) -> float:
+) -> Tuple[float, float]:
     """
     This function computes the test step.
 
