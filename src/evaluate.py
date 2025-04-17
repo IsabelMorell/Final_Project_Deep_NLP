@@ -18,7 +18,7 @@ set_seed(42)
 # static variables
 DATA_PATH: Final[str] = "data"
 
-def main(name: str) -> Tuple[float, float]:
+def evaluate(name: str) -> Tuple[float, float]:
     """
     This function is the main program for the testing.
     """
@@ -45,6 +45,6 @@ def main(name: str) -> Tuple[float, float]:
 if __name__ == "__main__":
     accuracy_ner: float
     accuracy_sa: float
-    accuracy_ner, accuracy_sa = main('best_model')
+    accuracy_ner, accuracy_sa = evaluate('best_model')
     print(f"accuracy_ner: {accuracy_ner}")
     print(f"accuracy_sa: {accuracy_sa}")
