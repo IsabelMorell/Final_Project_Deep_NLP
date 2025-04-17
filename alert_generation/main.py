@@ -56,7 +56,7 @@ def abrir_y_ejecutar_prompt():
         u.delete_history()
         print(f"Ejecutando para el modelo: {model}")
         try:
-            u.prompt_model(model, prompt_sustituido)
+            u.prompt_model(model, prompt_sustituido, path=".")
         except Exception as e:
             print(f"Error al ejecutar para el modelo {model}: {e}")
 

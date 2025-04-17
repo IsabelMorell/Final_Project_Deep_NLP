@@ -159,7 +159,7 @@ def word2idx(embedding_dict, tweet) -> torch.Tensor:
         indices = [0]  
     return torch.tensor(indices)
 
-def collate_fn(batch) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+def collate_fn(batch) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     """
     This function processes a batch of samples for a DataLoader, preparing text sequences
     and labels with padding and sorting by length.
@@ -206,11 +206,12 @@ def collate_fn(batch) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     
     # One hot NER
     batch_size, max_len = tags_padded.shape
-    tags_onehot = torch.zeros((batch_size, lengths[0], NUM_NER_CLASSES), dtype=torch.float)
+    tags_onehot = torch.zeros((batch_size, int(lengths[0].item()), NUM_NER_CLASSES), dtype=torch.float)
 
+    label_idx: int
     for i in range(batch_size):
         for j in range(lengths[i]):
-            label_idx = tags_padded[i, j].item()
+            label_idx = int(tags_padded[i, j].item())
             tags_onehot[i, j, label_idx] = 1.0
         
     # One hot SA
@@ -218,7 +219,7 @@ def collate_fn(batch) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     sa_onehot = torch.zeros((batch_size, NUM_SA_CLASSES), dtype=torch.float)
 
     for i in range(batch_size):
-        label_idx = sa[i].item()
+        label_idx = int(sa[i].item())
         sa_onehot[i, label_idx] = 1.0
 
     return texts_padded, tags_onehot, sa_onehot, lengths

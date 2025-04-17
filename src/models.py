@@ -1,6 +1,9 @@
 # deep learning libraries
 import torch
-from torch.nn.utils.rnn import pad_packed_sequence, pack_padded_sequence
+from torch.nn.utils.rnn import pad_packed_sequence, pack_padded_sequence, PackedSequence
+
+# other libraries
+from typing import Tuple
 
 class NERSA(torch.nn.Module):
     def __init__(
@@ -45,7 +48,7 @@ class NERSA(torch.nn.Module):
         self.fc_sa: torch.nn.Linear = torch.nn.Linear(in_features=2*hidden_size, out_features=num_SA_labels)  
 
 
-    def forward(self, inputs: torch.Tensor, text_lengths: torch.Tensor) -> torch.Tensor:
+    def forward(self, inputs: torch.Tensor, text_lengths: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         This method returns a batch of logits. It is the output of the
         neural network.
@@ -66,7 +69,7 @@ class NERSA(torch.nn.Module):
         embedded: torch.Tensor = self.embedding(inputs)
 
         # Pack the embedded text for efficient processing in the LSTM
-        packed_embedded: torch.Tensor = pack_padded_sequence(embedded, text_lengths, batch_first=True, enforce_sorted=False)
+        packed_embedded: PackedSequence = pack_padded_sequence(embedded, text_lengths, batch_first=True, enforce_sorted=False)
 
         batch_size: int = inputs.shape[0]
 
