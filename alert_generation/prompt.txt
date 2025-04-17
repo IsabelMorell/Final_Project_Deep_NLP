@@ -1,0 +1,11 @@
+Generate an alert of the following sentence knowing that the data in parenthesis is an Named-entity tag
+and that the sentiment of the sentece is SA = [S]. You can use different alert sentences as long as 
+you mention something related to the entity type of the subject and something related with the SA of
+the phrase.
+
+### SENTENCE
+[N]
+
+### EXAMPLE
+An example of an alert is for the inputs: “Musk (B-PERSON) accused of giving Nazi (B-ORG) salute during Trump (B-PERSON) inauguration (B-EVENT) celebrations (I-EVENT)" SA = negative
+output: " REPUTATION RISK: Musk mentioned NEGATIVELY"

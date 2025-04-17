@@ -1,0 +1,10 @@
+[
+    {
+        "role": "user",
+        "content": "Generate an alert of the following sentence knowing that the data in parenthesis is an Named-entity tag\nand that the sentiment of the sentece is SA = positive. You can use different alert sentences as long as \nyou mention something related to the entity type of the subject and something related with the SA of\nthe phrase.\n\n### SENTENCE\nGay (B-EVENT) marriage (I-EVENT) has (O) been (O) legalized (O) in (O) England (B-LOC)!\n\n### EXAMPLE\nAn example of an alert is for the inputs: “Musk (B-PERSON) accused of giving Nazi (B-ORG) salute during Trump (B-PERSON) inauguration (B-EVENT) celebrations (I-EVENT)\" SA = negative\noutput: \" REPUTATION RISK: Musk mentioned NEGATIVELY\""
+    },
+    {
+        "role": "assistant",
+        "content": "Here is a possible alert:\n\n\"CIVIL RIGHTS ADVANCEMENT: England celebrates POSITIVE milestone with legalization of gay marriage!\"\n\nThis alert mentions the entity type of the subject, which is a location (England) and an event (gay marriage), and also conveys the positive sentiment (SA = positive) of the sentence. \n\nAlternatively, another possible alert could be:\n\n\"HISTORIC VICTORY: England makes PROGRESS with POSITIVE step towards equality by legalizing gay marriage!\"\n\nThis alert also highlights the positive sentiment and mentions the location (England) and the event (gay marriage), emphasizing the historic and progressive nature of the development."
+    }
+]
