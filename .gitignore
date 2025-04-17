@@ -3,3 +3,4 @@ env_project/*
 venv-nlp/*
 src/__pycache__/*
 data/[Dd]*
+models/*

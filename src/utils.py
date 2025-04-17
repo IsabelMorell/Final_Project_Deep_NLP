@@ -262,7 +262,12 @@ class Accuracy:
 
         # update counts
         self.correct += int(predictions.eq(labels).sum().item())
-        self.total += labels.shape[0]
+        
+        num_predictions = 1
+        for i in labels.shape:
+            num_predictions *= i
+        
+        self.total += num_predictions
 
         return None
 
