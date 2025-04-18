@@ -14,9 +14,53 @@ from torch.utils.data import Dataset, DataLoader
 import os
 
 from src.utils import fix_tags_string, process_sentence_and_align_tags, collate_fn
-from src.utils import ENTITY2INDEX
 
 MODEL = f"cardiffnlp/twitter-roberta-base-sentiment-latest"
+
+SA2INDEX = {"negative": 0, "neutral": 1, "positive": 2}
+
+ENTITY2INDEX = {
+    "O": 0,
+    "B-CARDINAL": 1,
+    "B-DATE": 2,
+    "I-DATE": 3,
+    "B-PERSON": 4,
+    "I-PERSON": 5,
+    "B-NORP": 6,
+    "B-GPE": 7,
+    "I-GPE": 8,
+    "B-LAW": 9,
+    "I-LAW": 10,
+    "B-ORG": 11,
+    "I-ORG": 12, 
+    "B-PERCENT": 13,
+    "I-PERCENT": 14, 
+    "B-ORDINAL": 15, 
+    "B-MONEY": 16, 
+    "I-MONEY": 17, 
+    "B-WORK_OF_ART": 18, 
+    "I-WORK_OF_ART": 19, 
+    "B-FAC": 20, 
+    "B-TIME": 21, 
+    "I-CARDINAL": 22, 
+    "B-LOC": 23, 
+    "B-QUANTITY": 24, 
+    "I-QUANTITY": 25, 
+    "I-NORP": 26, 
+    "I-LOC": 27, 
+    "B-PRODUCT": 28, 
+    "I-TIME": 29, 
+    "B-EVENT": 30,
+    "I-EVENT": 31,
+    "I-FAC": 32,
+    "B-LANGUAGE": 33,
+    "I-PRODUCT": 34,
+    "I-ORDINAL": 35,
+    "I-LANGUAGE": 36
+}
+
+NUM_NER_CLASSES = 37
+NUM_SA_CLASSES = 3
 
 class OntoNotesDataset(Dataset):
     """
