@@ -2,7 +2,7 @@
 import torch
 import numpy as np
 import pandas as pd
-from typing import Tuple, Any, List, Dict
+from typing import Tuple, List, Dict, Optional
 from torch.jit import RecursiveScriptModule
 from torch.utils.data import Dataset, DataLoader
 from datasets import load_dataset
@@ -243,7 +243,7 @@ class Accuracy:
     correct: int
     total: int
 
-    def __init__(self, task: str = None) -> None:
+    def __init__(self, task: Optional[str] = None) -> None:
         """
         This is the constructor of Accuracy class. It should
         initialize correct and total to zero.
