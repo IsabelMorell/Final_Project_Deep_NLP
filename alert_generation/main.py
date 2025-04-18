@@ -4,33 +4,38 @@ from torch.jit import RecursiveScriptModule
 
 # other libraries
 import os
-from typing import Dict
+from typing import List, Dict, Optional
 
 # own modules
 import utils as u
 from src.utils import set_seed, load_model, return_index2label
-from src.data import ENTITY2INDEX, SA2INDEX
+from src.utils import ENTITY2INDEX, SA2INDEX
 
 # set device
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 set_seed(42)
 
-placeholder = [
+placeholder: List[str] = [
     "[S]",  # sentiment of the sentence
-    "[N]"  # Sentence + NER tags
+    "[N]"  # sentence + NER tags
 ]
 
-def sustituir_prompt(prompt: str, sentence_ner: str, sa: str, placeholders: list) -> str:
+def replace_prompt(prompt: str, sentence_ner: str, sa: str, placeholders: List[str]) -> str:
     """
-    Reemplaza los placeholders en el prompt con el contenido de los archivos en paths.
+    Replaces the placeholders in the prompt with the content of the sentence_ner and sa strings.
     
-    prompt: str: Enunciado con los placeholders [E], [P], [R], [C], [A]
-    paths: list: Lista de rutas a los archivos [Enunciado, Código Profesor, Rubrica, Correcion, Código Alumno]
+    Args:
+        prompt (str): alert generation tasks with the placeholders [S], [N] where the first refers to the sentence's
+            sentiment and the second to the sentence along with the NER tags associated to the words.
+        sentence_ner (str): input sentence with its associated NER tags.
+        sa (str): sentiment of the input sentence.
+        placeholders (list): placeholders to replace
     
     Returns:
-    str: El prompt con los placeholders reemplazados por el contenido de los archivos.
+        prompt (str): prompt with the placeholders replaced by the sa and sentence_ner strings.
     """
-
+    
+    content: str
     # Loop through the placeholders and replace them in the prompt
     for i in range(len(placeholders)):
         if placeholder[i] == "[S]":
@@ -43,42 +48,74 @@ def sustituir_prompt(prompt: str, sentence_ner: str, sa: str, placeholders: list
     
     return prompt
 
-def abrir_y_ejecutar_prompt(sentence_ner: str, sa: str):
-    # Leer el contenido del archivo 'prompt.txt' que está en la carpeta actual
+def abrir_y_ejecutar_prompt(sentence_ner: str, sa: str) -> Optional[str]:
+    """
+    Reads the content of the file prompt.txt, replaces the placeholders and 
+    prompts the model.
+
+    Args:
+        sentence_ner (str): input sentence with its associated NER tags.
+        sa (str): sentiment of the input sentence.
+
+    Returns:
+        response (str): models response to the prompt
+    """
+    
     try:
         with open('prompt.txt', 'r', encoding='utf-8') as file:
-            prompt = file.read()
+            prompt: str = file.read()
     except FileNotFoundError:
-        print("El archivo 'prompt.txt' no se encuentra en la carpeta actual.")
+        print("The file 'prompt.txt' isn't in the current folder.")
         return
     except Exception as e:
-        print(f"Error al leer el archivo 'prompt.txt': {e}")
+        print(f"Error when reading file 'prompt.txt': {e}")
         return
     
-    prompt_sustituido = sustituir_prompt(prompt, sentence_ner, sa, placeholder)
+    replaced_prompt: str = replace_prompt(prompt, sentence_ner, sa, placeholder)
     
-    # Obtener los modelos disponibles
+    # Get available models
     models = u.get_available_models()[0:-4]
     if not models:
-        print("No se encontraron modelos disponibles.")
+        print("There are no models available.")
         return
     
-    # Para cada modelo, ejecutar la función 'prompt_model' pasando el prompt sustituido
+    # For each model, run function 'prompt_model' with the replaced prompt
     for model in models:
         u.delete_history()
-        print(f"Ejecutando para el modelo: {model}")
+        print(f"Running for model: {model}")
         try:
-            response = u.prompt_model(model, prompt_sustituido, path=".")
+            response = u.prompt_model(model, replaced_prompt, path=".")
             return response
         except Exception as e:
-            print(f"Error al ejecutar para el modelo {model}: {e}")
+            print(f"Error while running model {model}: {e}")
 
-def most_probable_entity(logits: torch.Tensor, index2entity: dict) -> str:
+def most_probable_entity(logits: torch.Tensor, index2entity: Dict[int, str]) -> str:
+    """
+    Return the entity with the highest probability
+
+    Args:
+        logits (torch.Tensor): probabilities associated with a specific index
+        index2entity (Dict[int, str]): dictionary with the relationship between the indexes and the entities
+
+    Returns:
+        entity (str): entity associated with the highest probability
+    """
+    
     idx_most_probable: int = torch.argmax(logits).to(int).item()
     entity: str = index2entity[idx_most_probable]
     return entity
 
-def add_ner_to_sentence(sentence: str, ner_tags: list) -> str:
+def add_ner_to_sentence(sentence: str, ner_tags: List[str]) -> str:
+    """
+    For every word in a sentence, it is followed by its associated NER tag written in parenthesis.
+
+    Args:
+        sentence (str): input sentence
+        ner_tags (List[str]): NER tags associated to each word of the input sentence
+
+    Returns:
+        ner_sentence (str): sentence where every word is followed by its associated NER tag written in parenthesis
+    """
     ner_sentence = ""
     for i, word in enumerate(sentence.split(" ")):
         ner_sentence += f"{word} ({ner_tags[i]})"
@@ -97,18 +134,18 @@ if __name__ == "__main__":
     model: RecursiveScriptModule = load_model("best_model")
     model.to(device)
     
-    # 1. Pasar frase original por el modelo
+    # 1. Pass original sentence through the model
     ner_logits, sa_logits = model()
 
-    # 2. Sacar NER mas probable por palabra y recuperar la tag asociada al indice
+    # 2. Obtain most probable NER tag for each word
     ner_tags: list = [most_probable_entity(ner_logits[i, :], INDEX2ENTITY) for i, word in enumerate(sentence.split(" "))]
 
-    # 3. Sacar SA mas probable y su tag asociado
+    # 3. Obtain most probable sentence sentiment
     # sa = "negative"
     # sa = "positive"
     sa: str = most_probable_entity(sa_logits, INDEX2SA)
 
-    # 4. Funcion que añade las etiquetas a la frase
+    # 4. Add NER tags to the sentence
     # sentence_ner = "Child (B-PER) murdered (O) in (O) Florida (B-LOC)"
     # sentence_ner = "Gay (B-EVENT) marriage (I-EVENT) has (O) been (O) legalized (O) in (O) England (B-LOC)!"
     sentence_ner = add_ner_to_sentence(sentence, ner_tags)

@@ -5,17 +5,23 @@ import requests
 import concurrent.futures
 from tqdm import tqdm
 import json
-import re
 import os
 
 from typing import List, Dict
 
-
 messages: List[Dict[str, str]] = []
 
 
-def get_available_models(api_url: str = "http://localhost:11434/api/tags") -> list[str]:
-    """Returns list of available (downloaded) models"""
+def get_available_models(api_url: str = "http://localhost:11434/api/tags") -> List[str]:
+    """
+    Returns list of available (downloaded) models
+    
+    Args:
+        api_url (str): url where ollama's api is running
+        
+    Returns:
+        List[str]: list with the names of the available models    
+    """
     try:
         response = requests.get(api_url)
         response.raise_for_status()
@@ -29,7 +35,15 @@ def get_available_models(api_url: str = "http://localhost:11434/api/tags") -> li
 
 
 def load_model(model: str) -> bool:
-    """Checks if a model is loaded and pulls it otherwise"""
+    """
+    Checks if a model is loaded and pulls it otherwise
+    
+    Args:
+        model (str): model to load
+        
+    Returns:
+        bool: indicates if the model was loaded or not
+    """
     model_name = model if ':' in model else f"{model}:latest"
 
     if model_name in get_available_models():
@@ -85,7 +99,19 @@ def delete_history() -> None:
 
 
 def prompt_model(model: str, prompt: str, path: str, timeout: int = 900) -> str:
-    """Prompts the model, continuing the previous conversation. Requires running 'ollama serve' first"""
+    """
+    Prompts the model, continuing the previous conversation. Requires running 'ollama serve' first
+    
+    Args:
+        model (str): name of the model to converse with
+        prompt (str): content to send the model
+        path (str): path where the conversation is going to be saved at
+        timeout (int): time to wait for the model's answer. Raises an Exception if the model doesn't
+            respond within the specified timeout.
+        
+    Return:
+        response (str): model's response to the prompt
+    """
     messages.append(
         {
             'role': 'user',
@@ -115,18 +141,25 @@ def prompt_model(model: str, prompt: str, path: str, timeout: int = 900) -> str:
     return response
 
 
-def save_conversation_to_json(model: str, messages: list, path: str):
-    """Guarda toda la conversación en un archivo JSON con timestamp"""
+def save_conversation_to_json(model: str, messages: List[str], path: str):
+    """
+    Saves the conversation in a json with the timestamp
+    
+    Args:
+        model (str): name of the model that was prompted
+        messages (List[str]): prompt and response of the model
+        path (str): path where to save the json    
+    """
     try:
-        # Crear el nombre del archivo con el timestamp
+        # Name the file
         timestamp = int(time.time())
         model = model.replace(":","-")
         filename = os.path.join(f'{path}/conversations', f'{model}_{timestamp}.json')
 
-        # Crear el directorio si no existe
+        # Make the folder if it doesn't exist
         os.makedirs(f'{path}/conversations', exist_ok=True)
 
-        # Guardar la conversación en el archivo JSON
+        # Save the conversation in a json
         with open(filename, 'w', encoding='utf-8') as f:
             json.dump(messages, f, ensure_ascii=False, indent=4)
 
@@ -139,11 +172,24 @@ logfile: str | None = None
 
 
 def set_logfile(new_logfile: str):
+    """
+    Sets the path for the logfile. All logs will be appended to this file.
+    
+    Args:
+        new_logfile (str): Path to the logfile.
+    """
     global logfile
     logfile = new_logfile
 
 
 def log(text: str, end: str = '\n'):
+    """
+    Logs the provided text to the logfile if set, otherwise prints to stdout.
+
+    Args:
+        text (str): The message to log.
+        end (str): The end character (default is newline).
+    """
     if logfile:
         with open(logfile, 'a+', encoding='utf-8') as f:
             f.write(text)
