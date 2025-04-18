@@ -1,6 +1,12 @@
-import utils as u
-import os
+# deep learning libraries
 import torch
+
+# other libraries
+import os
+from typing import Dict
+
+# own modules
+import utils as u
 
 ENTITY2INDEX = {
     "O": 0,
@@ -102,7 +108,7 @@ def abrir_y_ejecutar_prompt(sentence_ner: str, sa: str):
         except Exception as e:
             print(f"Error al ejecutar para el modelo {model}: {e}")
 
-def return_index2label(label2index: dict) -> dict:
+def return_index2label(label2index: Dict[str, int]) -> Dict[int, str]:
     index2label = {}
     for label in label2index:
         index = label2index[label]
