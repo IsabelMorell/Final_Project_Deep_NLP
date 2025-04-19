@@ -35,12 +35,12 @@ def main() -> None:
     num_SA_labels: int = 3
 
     # hyperparameters
-    epochs: int = 50
-    step_size: int = 40
+    epochs: int = 30
+    step_size: int = 20
     lr: float = 1e-3
     weight_decay: float = 1e-3
     batch_size: int = 128
-    hidden_size: int = 128
+    hidden_size: int = 256
     num_layers: int = 2
     dropout: float = 0.3
 
