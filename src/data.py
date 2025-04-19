@@ -13,6 +13,7 @@ from torch.utils.data import Dataset, DataLoader
 # other libraries
 import os
 
+# own modules
 from src.utils import fix_tags_string, process_sentence_and_align_tags, collate_fn
 from src.utils import ENTITY2INDEX
 

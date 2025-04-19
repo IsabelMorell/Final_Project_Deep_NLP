@@ -16,7 +16,7 @@ class NERSA(torch.nn.Module):
         dropout: float = 0.5,
     ) -> None:
         """
-        Constructor of the class NERSAModel, a LSTM model.
+        Constructor of the class NERSA, a bidirectional LSTM model.
 
         Args:
             embedding_weights (torch.Tensor): Pre-trained word embeddings.
@@ -25,7 +25,7 @@ class NERSA(torch.nn.Module):
             num_NER_labels (int): number of posible NER labels.
             num_SA_labels (int): number of sentiments.
             dropout (float):  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer, 
-            with dropout probability equal to dropout
+                with dropout probability equal to dropout
         """
         super().__init__()
 
@@ -77,8 +77,8 @@ class NERSA(torch.nn.Module):
         h0: torch.Tensor = torch.empty((2*self.num_layers, batch_size, self.hidden_size), dtype=torch.float32, device=inputs.device)
         c0: torch.Tensor = torch.empty((2*self.num_layers, batch_size, self.hidden_size), dtype=torch.float32, device=inputs.device)
         
-        torch.nn.init.xavier_normal_(h0)  # torch.nn.init.xavier_uniform_(self.h0) si num_layer <= 2
-        torch.nn.init.xavier_normal_(c0)  # torch.nn.init.xavier_uniform_(self.c0) si num_layer <= 2
+        torch.nn.init.xavier_normal_(h0)
+        torch.nn.init.xavier_normal_(c0)
 
         # Pass the packed sequence through the LSTM
         packed_output, (hidden, cell) = self.lstm(packed_embedded, (h0, c0))
@@ -88,8 +88,6 @@ class NERSA(torch.nn.Module):
 
         # Sentiment Analysis
         pooled_hidden_state_mean = output_unpacked.mean(dim=1)
-
-        # si con solo una lineal no funciona entonces pondremos un MLP
 
         linear_ner: torch.Tensor = self.fc_ner(output_unpacked)
         

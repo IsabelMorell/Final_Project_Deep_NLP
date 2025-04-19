@@ -2,7 +2,7 @@
 import torch
 import numpy as np
 import pandas as pd
-from typing import Tuple, Any, List
+from typing import Tuple, List, Dict, Optional
 from torch.jit import RecursiveScriptModule
 from torch.utils.data import Dataset, DataLoader
 from datasets import load_dataset
@@ -20,6 +20,8 @@ CONTRACTIONS = {
     "'d": "would", "'s": "is", "won't": "will not", "can't": "cannot"
 }
 IRRELEVANT_WORDS = {"wow", "oops", "ah", "ugh", "yay", "mhm", "`"}
+
+SA2INDEX = {"negative": 0, "neutral": 1, "positive": 2}
 
 ENTITY2INDEX = {
     "O": 0,
@@ -67,7 +69,7 @@ NUM_SA_CLASSES = 3
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 # HOLA SOY MARÍA, AQUÍ NO SE QUE PONER EN LO QUE DEVUELVE
-def fix_tags_string(x) -> List:
+def fix_tags_string(x) -> List[int]:
     """
     This function processes a string of comma-separated numbers and converts it into a list 
     of integers. If the input is not a string, it returns the input unchanged.
@@ -224,6 +226,13 @@ def collate_fn(batch) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.T
 
     return texts_padded, tags_onehot, sa_onehot, lengths
 
+def return_index2label(label2index: Dict[str, int]) -> Dict[int, str]:
+    index2label = {}
+    for label in label2index:
+        index = label2index[label]
+        index2label[index] = label
+    return index2label
+
 class Accuracy:
     """
     This class is the accuracy object.
@@ -236,7 +245,7 @@ class Accuracy:
     correct: int
     total: int
 
-    def __init__(self) -> None:
+    def __init__(self, task: Optional[str] = None) -> None:
         """
         This is the constructor of Accuracy class. It should
         initialize correct and total to zero.
@@ -244,6 +253,18 @@ class Accuracy:
 
         self.correct = 0
         self.total = 0
+        self.task = task
+        
+        if task:
+            if task.lower() == "ner":
+                idx2entity: Dict[int, str] = return_index2label(ENTITY2INDEX)
+                self.idxs: List[int] = list(idx2entity.keys())
+                self.correct_ner_occurrences = {idx: 0 for idx in idx2entity.keys()}
+                self.ner_occurrences = {idx: 0 for idx in idx2entity.keys()}
+            elif task.lower() == "sa":
+                pass
+            else:
+                raise ValueError("Please introduce a valid task like ner or sa")
 
     def update(self, logits: torch.Tensor, labels: torch.Tensor) -> None:
         """
@@ -257,12 +278,23 @@ class Accuracy:
         """
 
         # compute predictions
-        predictions = logits.argmax(1).type_as(labels)
-        labels = labels.argmax(1).type_as(labels)
+        predictions = logits.argmax(-1).type_as(labels)
+        labels = labels.argmax(-1).type_as(labels)
 
         # update counts
-        self.correct += int(predictions.eq(labels).sum().item())
-        self.total += labels.shape[0]
+        self.correct += int(predictions.eq(labels).sum().item())        
+        self.total += labels.numel()
+        
+        if self.task == "ner":
+            for idx in self.idxs:
+                labels_idx = (labels.to(torch.long) == idx)
+                predictions_idx = (predictions.to(torch.long) == idx)
+                    
+                correct_ner_idx = (labels_idx == predictions_idx)*labels_idx
+                
+                self.correct_ner_occurrences[idx] += int(correct_ner_idx.sum().item())  
+                
+                self.ner_occurrences[idx] += int((labels_idx.sum()).item())
 
         return None
 
@@ -275,6 +307,12 @@ class Accuracy:
         """
 
         return self.correct / self.total
+    
+    def ner_entities_accuracy(self) -> Tuple[Dict[int, int], Dict[int, int]]:
+        if self.task == "ner":
+            return self.correct_ner_occurrences, self.ner_occurrences
+        else:
+            raise ValueError("This function is only avaliable for ner tasks")
 
     def reset(self) -> None:
         """

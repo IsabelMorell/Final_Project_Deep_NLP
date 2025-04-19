@@ -13,3 +13,12 @@ necesitaremos 2 errores (CrossEntropyLoss) (TRAIN.PY)
 
 IDEA: si va mal una solo lineal en clasificacion, hacer una MLP
 IDEA: Agrega dropout entre LSTM y capas lineales.
+
+COMENTARIOS SOBRE LOS MODELOS:
+- el de 2 capas va un poco mejor que el de 1
+- de los de dos capas, parece que el de hidden_size 256 va mejor que el de 128 pero hay que ver cuantas
+aciertan de cada etiqueta de ner
+- como vemos en la grafica de la perdida de ner en el modelo de una capa, hay cambios bruscos en la
+perdida => vamos a incluir gradient clipping
+
+ahora mery va a probar con LrPlateau + gradient clipping y yo voy a probar con gradient
