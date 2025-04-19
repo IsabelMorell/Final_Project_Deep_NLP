@@ -77,7 +77,7 @@ If you want to test out the whole pipeline with out pre-trained NERSA model, the
 
 1. Download the ollama model you want to use
 
-2. In the file alert_generation/generate_alerts.py, modify the variable MODEL (line 19) with the
+2. In the file `alert_generation/generate_alerts.py`, modify the variable `MODEL` (line 19) with the
 name if the model you have dowloaded
 
-3. Write the sentences you want to analyze in the variable sentences (line 155) in the same file (alert_generation/generate_alerts.py)
+3. Write the sentences you want to analyze in the variable `sentences` (line 155) in the same file (`alert_generation/generate_alerts.py`)
