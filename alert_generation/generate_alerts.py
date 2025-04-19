@@ -159,16 +159,16 @@ if __name__ == "__main__":
         "Scientist discover new vaccine against malaria",
         "Massive earthquake strikes downtown Tokyo.",
         "Firefighters rescue family trapped in California wildfire.",
-        "Mr. and Mrs. Dursley, of number four, Privet Drive, were proud to say that they\
-            were perfectly normal",
+        "Mr. and Mrs. Dursley, of number four, Privet Drive, were proud to say that they were perfectly normal",
         "Local library hosts weekend book fair for community members",
         "Post office changes hours for holiday season",
-        "A team of engineers from the state university has completed a study evaluating \
-            the durability of recycled materials in road construction",
+        "A team of engineers from the state university has completed a study evaluating the durability of recycled materials in road construction",
     ]
 
     for sentence in sentences:
-        sentence_idxs: torch.Tensor = tokenize_new_sentence(sentence)
+        sentence_idxs: torch.Tensor
+        is_word_processed: Dict[int, bool]
+        sentence_idxs, is_word_processed = tokenize_new_sentence(sentence)
         sentence_idxs = sentence_idxs.unsqueeze(0)
 
         sentence_len: torch.Tensor = torch.tensor(
@@ -185,10 +185,15 @@ if __name__ == "__main__":
         # Obtain most probable NER tag for each word
         ner_logits = ner_logits.squeeze(0)
 
-        ner_tags: list = [
-            most_probable_entity(ner_logits[i, :], INDEX2ENTITY)
-            for i, word in enumerate(sentence.split(" "))
-        ]
+        ner_tags: List[str] = []
+        idx_aux = 0 
+        for i, word in enumerate(sentence.split(" ")):
+            if is_word_processed[i] and idx_aux < len(ner_logits):
+                tag = most_probable_entity(ner_logits[idx_aux, :], INDEX2ENTITY)
+                idx_aux += 1
+            else:
+                tag = ""
+            ner_tags.append(tag)
 
         # Obtain most probable sentence sentiment
         # sa = "negative"

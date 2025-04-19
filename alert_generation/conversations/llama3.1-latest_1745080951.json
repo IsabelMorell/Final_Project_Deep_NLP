@@ -1,0 +1,10 @@
+[
+    {
+        "role": "user",
+        "content": "Generate an alert of the following sentence knowing that the data in parenthesis is an Named-entity tag\nand that the sentiment of the sentece is SA = positive. You can use different alert sentences as long as \nyou mention something related to the entity type of the subject and something related with the SA of\nthe phrase. However, you can only return one sentence. Do not add more than the alert and only return one\nalert.\n\n### SENTENCE\nChild (B-PERSON) murdered (I-PERSON) in () Florida (I-PERSON)\n\n### EXAMPLE\nAn example of an alert is for the inputs: “Musk (B-PERSON) accused of giving Nazi (B-ORG) salute during Trump (B-PERSON) inauguration (B-EVENT) celebrations (I-EVENT)\" SA = negative\noutput: \" REPUTATION RISK: Musk mentioned NEGATIVELY\""
+    },
+    {
+        "role": "assistant",
+        "content": "Here is a potential alert based on the given sentence:\n\n\"CHILD SAFETY CONCERN: A CHILD was mentioned in a CRIMINAL EVENT\"\n\nThis alert mentions something related to the entity type of the subject (child) and something related with the sentiment of the phrase (a criminal event, which is negative)."
+    }
+]

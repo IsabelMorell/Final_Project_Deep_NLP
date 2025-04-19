@@ -7,7 +7,7 @@ import numpy as np
 import torch
 import ast
 import pandas as pd
-from typing import Tuple, List
+from typing import Tuple, List, Dict
 from torch.utils.data import Dataset, DataLoader
 
 # other libraries
@@ -280,7 +280,7 @@ def load_data(
     return train_dataloader, val_dataloader, test_dataloader
 
 
-def tokenize_new_sentence(sentence: str) -> torch.Tensor:
+def tokenize_new_sentence(sentence: str) -> Tuple[torch.Tensor, Dict[int, bool]]:
     """
     Tokenizes and preprocesses a new sentence to obtain a tensor of token indices.
 
@@ -302,17 +302,21 @@ def tokenize_new_sentence(sentence: str) -> torch.Tensor:
     doc = NLP(sentence)
 
     processed_tokens = []
+    is_word_processed = {}
 
-    for token in doc:
+    for i, token in enumerate(doc):
         if token.is_punct or token.is_space or token.text.lower() in IRRELEVANT_WORDS:
+            is_word_processed[i] = False
             continue
         if token.is_stop:
+            is_word_processed[i] = False
             continue
 
         processed_tokens.append(token.lemma_)
+        is_word_processed[i] = True
 
     word_to_index = {word: i for i, word in enumerate(GLOVE.vocab.strings)}
 
     sentence_indx: torch.Tensor = word2idx(word_to_index, processed_tokens)
     sentence_idxs: torch.Tensor = torch.Tensor(sentence_indx)
-    return sentence_idxs
+    return sentence_idxs, is_word_processed
