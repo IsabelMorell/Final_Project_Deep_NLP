@@ -39,6 +39,14 @@ To evaluate the model, run:
 
 This script loads the `best_model.pt` file from the models/ folder, computes the accuracy on the test set, and prints the result to the command line.
 
+## Training our model
+
+To train our NER + SA model you must use as hyperparameters 30 epoch, a step size of 20, a learning rate of \( 1 \times 10^{-3} \), a weight decay of \( 1 \times 10^{-3} \), a batch size of 128, a hidden size of 256, two layers and a dropout rate of 0.3. This hyperparameters are found in the `src/train.py` file on line 43.
+
+To train the NER + SA model and save it, run:
+
+    python -m src.train
+
 ## Generating alerts
 
 To generate alerts you need to download a ollama model like llama3.3. For this you need to run the following comand replacing llama3.3 with the name of the model you want:
@@ -73,7 +81,7 @@ If you want to train the model with your own dataset:
 The training script will automatically clean your data and generate the `_token.csv` files needed for training.
 
 ## Running the complete pipeline (NER + SA + Alert Generation)
-If you want to test out the whole pipeline with out pre-trained NERSA model, then follow the next steps:
+If you want to test our the whole pipeline with out pre-trained NERSA model, then follow the next steps:
 
 1. Download the ollama model you want to use
 
