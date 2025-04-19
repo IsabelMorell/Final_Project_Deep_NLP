@@ -16,6 +16,8 @@ from src.constants import ENTITY2INDEX, SA2INDEX
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 set_seed(42)
 
+MODEL = "llama3.3:latest"
+
 placeholder: List[str] = [
     "[S]",  # sentiment of the sentence
     "[N]"  # sentence + NER tags
@@ -75,7 +77,7 @@ def abrir_y_ejecutar_prompt(sentence_ner: str, sa: str) -> Optional[str]:
     replaced_prompt: str = replace_prompt(prompt, sentence_ner, sa, placeholder)
     
     # Get available models
-    models = u.get_available_models()[0:-4]
+    models = [MODEL]  # u.get_available_models()[0:-4]
     if not models:
         print("There are no models available.")
         return
