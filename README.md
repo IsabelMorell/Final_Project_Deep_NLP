@@ -41,7 +41,7 @@ This script loads the `best_model.pt` file from the models/ folder, computes the
 
 ## Training our model
 
-To train our NER + SA model you must use as hyperparameters 30 epoch, a step size of 20, a learning rate of \( 1 \times 10^{-3} \), a weight decay of \( 1 \times 10^{-3} \), a batch size of 128, a hidden size of 256, two layers and a dropout rate of 0.3. This hyperparameters are found in the `src/train.py` file on line 43.
+To train our NER + SA model you must use as hyperparameters 30 epoch, a step size of 20, a learning rate of 1e-3, a weight decay of 1e-3, a batch size of 128, a hidden size of 256, two layers and a dropout rate of 0.3. This hyperparameters are found in the `src/train.py` file on line 43.
 
 To train the NER + SA model and save it, run:
 
