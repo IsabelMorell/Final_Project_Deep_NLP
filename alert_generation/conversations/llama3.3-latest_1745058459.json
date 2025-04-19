@@ -1,0 +1,10 @@
+[
+    {
+        "role": "user",
+        "content": "Generate an alert of the following sentence knowing that the data in parenthesis is an Named-entity tag\nand that the sentiment of the sentece is SA = neutral. You can use different alert sentences as long as \nyou mention something related to the entity type of the subject and something related with the SA of\nthe phrase.\n\n### SENTENCE\nGay (B-FAC) marriage (I-NORP) has (B-FAC) been (I-NORP) legalized (I-NORP) in (I-NORP) England! (I-PERSON)\n\n### EXAMPLE\nAn example of an alert is for the inputs: “Musk (B-PERSON) accused of giving Nazi (B-ORG) salute during Trump (B-PERSON) inauguration (B-EVENT) celebrations (I-EVENT)\" SA = negative\noutput: \" REPUTATION RISK: Musk mentioned NEGATIVELY\""
+    },
+    {
+        "role": "assistant",
+        "content": "Here is a possible alert sentence:\n\n\"POLICY UPDATE: England's laws on marriage, an aspect of NORP (National or Religious Group), have been mentioned in a NEUTRAL context.\"\n\nAlternatively, you could also use:\n\n* \"LEGISLATION ALERT: Neutral sentiment expressed regarding the legalization of marriage in England, a national entity.\"\n* \"SOCIAL NORMS UPDATE: A neutral statement has been made about marriage laws in England, related to NORP (National or Religious Group) entities.\"\n* \"INSTITUTIONAL DEVELOPMENT: England's stance on marriage, a facet of national policy, is mentioned with a neutral sentiment.\"\n\nThese alerts aim to highlight the entity type (NORP, national or religious group) and the neutral sentiment (SA = neutral) associated with the sentence."
+    }
+]

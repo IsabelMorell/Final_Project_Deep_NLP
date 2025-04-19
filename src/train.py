@@ -11,7 +11,8 @@ import torch
 import numpy as np
 
 # own modules
-from src.data import load_data, ENTITY2INDEX
+from src.data import load_data
+from src.constants import ENTITY2INDEX
 from src.models import NERSA
 from src.train_functions import train_step, val_step
 from src.utils import Accuracy, set_seed, save_model

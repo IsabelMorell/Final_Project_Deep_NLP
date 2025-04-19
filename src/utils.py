@@ -1,70 +1,22 @@
 # deep learning libraries
 import torch
 import numpy as np
-import pandas as pd
-from typing import Tuple, List, Dict, Optional
+
 from torch.jit import RecursiveScriptModule
 from torch.utils.data import Dataset, DataLoader
 from datasets import load_dataset
 from torch.nn.utils.rnn import pad_sequence
 
 # other libraries
+from typing import Tuple, List, Dict, Optional
+import pandas as pd
 import os
 import random
-import spacy
 import re
 import ast
 
-CONTRACTIONS = {
-    "n't": "not", "'ll": "will", "'re": "are", "'ve": "have", "'m": "am", 
-    "'d": "would", "'s": "is", "won't": "will not", "can't": "cannot"
-}
-IRRELEVANT_WORDS = {"wow", "oops", "ah", "ugh", "yay", "mhm", "`"}
-
-SA2INDEX = {"negative": 0, "neutral": 1, "positive": 2}
-
-ENTITY2INDEX = {
-    "O": 0,
-    "B-CARDINAL": 1,
-    "B-DATE": 2,
-    "I-DATE": 3,
-    "B-PERSON": 4,
-    "I-PERSON": 5,
-    "B-NORP": 6,
-    "B-GPE": 7,
-    "I-GPE": 8,
-    "B-LAW": 9,
-    "I-LAW": 10,
-    "B-ORG": 11,
-    "I-ORG": 12, 
-    "B-PERCENT": 13,
-    "I-PERCENT": 14, 
-    "B-ORDINAL": 15, 
-    "B-MONEY": 16, 
-    "I-MONEY": 17, 
-    "B-WORK_OF_ART": 18, 
-    "I-WORK_OF_ART": 19, 
-    "B-FAC": 20, 
-    "B-TIME": 21, 
-    "I-CARDINAL": 22, 
-    "B-LOC": 23, 
-    "B-QUANTITY": 24, 
-    "I-QUANTITY": 25, 
-    "I-NORP": 26, 
-    "I-LOC": 27, 
-    "B-PRODUCT": 28, 
-    "I-TIME": 29, 
-    "B-EVENT": 30,
-    "I-EVENT": 31,
-    "I-FAC": 32,
-    "B-LANGUAGE": 33,
-    "I-PRODUCT": 34,
-    "I-ORDINAL": 35,
-    "I-LANGUAGE": 36
-}
-
-NUM_NER_CLASSES = 37
-NUM_SA_CLASSES = 3
+# own modules
+import src.constants as cte
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
@@ -97,7 +49,7 @@ def replace_contractions(text) -> str:
     Returns:
         string containing the text without contractions, replaced by their full forms.
     """
-    for contraction, replacement in CONTRACTIONS.items():
+    for contraction, replacement in cte.CONTRACTIONS.items():
         text = re.sub(r"\b" + re.escape(contraction) + r"\b", replacement, text)
     return text
 
@@ -115,18 +67,17 @@ def process_sentence_and_align_tags(sentence, original_tags) -> Tuple[List, List
             - processed_tokens: a list of cleaned, lemmatized tokens.
             - aligned_tags: a list of tags aligned with the processed tokens.
     """
-    nlp = spacy.load("en_core_web_sm")
-
+    
     sentence = replace_contractions(sentence)
     sentence = sentence.replace("-", "")
-    doc = nlp(sentence)
+    doc = cte.NLP(sentence)
 
     processed_tokens = []
     aligned_tags = []
 
     tag_idx = 0
     for token in doc:
-        if token.is_punct or token.is_space or token.text.lower() in IRRELEVANT_WORDS:
+        if token.is_punct or token.is_space or token.text.lower() in cte.IRRELEVANT_WORDS:
             tag_idx += 1  # Skip both token and its tag
             continue
         if token.is_stop:
@@ -181,8 +132,7 @@ def collate_fn(batch) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.T
 
     """
     
-    glove = spacy.load('en_core_web_lg')
-    word_to_index = {word: i for i, word in enumerate(glove.vocab.strings)} 
+    word_to_index = {word: i for i, word in enumerate(cte.GLOVE.vocab.strings)} 
 
     # Ordenar por longitud de la secuencia (descendente)
     batch = sorted(batch, key=lambda x: len(x[0]), reverse=True)
@@ -201,14 +151,14 @@ def collate_fn(batch) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.T
 
     # Padding a la misma longitud
     texts_padded = pad_sequence(texts_indx, batch_first=True, padding_value=0)
-    tags_padded = pad_sequence(labels_indx, batch_first=True, padding_value=ENTITY2INDEX["O"]).long()
+    tags_padded = pad_sequence(labels_indx, batch_first=True, padding_value=cte.ENTITY2INDEX["O"]).long()
 
     # Longitudes de cada secuencia
     lengths = torch.tensor([len(text) for text in texts_padded], dtype=torch.long)
     
     # One hot NER
     batch_size, max_len = tags_padded.shape
-    tags_onehot = torch.zeros((batch_size, int(lengths[0].item()), NUM_NER_CLASSES), dtype=torch.float)
+    tags_onehot = torch.zeros((batch_size, int(lengths[0].item()), cte.NUM_NER_CLASSES), dtype=torch.float)
 
     label_idx: int
     for i in range(batch_size):
@@ -218,7 +168,7 @@ def collate_fn(batch) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.T
         
     # One hot SA
     batch_size = len(sa)
-    sa_onehot = torch.zeros((batch_size, NUM_SA_CLASSES), dtype=torch.float)
+    sa_onehot = torch.zeros((batch_size, cte.NUM_SA_CLASSES), dtype=torch.float)
 
     for i in range(batch_size):
         label_idx = int(sa[i].item())
@@ -257,7 +207,7 @@ class Accuracy:
         
         if task:
             if task.lower() == "ner":
-                idx2entity: Dict[int, str] = return_index2label(ENTITY2INDEX)
+                idx2entity: Dict[int, str] = return_index2label(cte.ENTITY2INDEX)
                 self.idxs: List[int] = list(idx2entity.keys())
                 self.correct_ner_occurrences = {idx: 0 for idx in idx2entity.keys()}
                 self.ner_occurrences = {idx: 0 for idx in idx2entity.keys()}

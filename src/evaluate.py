@@ -8,7 +8,8 @@ from typing import Final, Tuple
 
 # own modules
 from src.data import load_data
-from src.utils import ENTITY2INDEX, Accuracy, set_seed, load_model, return_index2label
+from src.utils import Accuracy, set_seed, load_model, return_index2label
+from src.constants import ENTITY2INDEX
 from src.train_functions import t_step
 
 # set device

@@ -14,8 +14,8 @@ from torch.utils.data import Dataset, DataLoader
 import os
 
 # own modules
-from src.utils import fix_tags_string, process_sentence_and_align_tags, collate_fn
-from src.utils import ENTITY2INDEX
+from src.utils import fix_tags_string, process_sentence_and_align_tags, collate_fn, replace_contractions, word2idx
+from src.constants import IRRELEVANT_WORDS, NLP, GLOVE
 
 MODEL = f"cardiffnlp/twitter-roberta-base-sentiment-latest"
 
@@ -236,4 +236,25 @@ def load_data(batch_size: int=64, num_workers: int = 0) -> Tuple[DataLoader, Dat
 
     return train_dataloader, val_dataloader, test_dataloader
 
+def tokenize_new_sentence(sentence: str) -> torch.Tensor:
+    sentence = preprocess(sentence)
 
+    sentence = replace_contractions(sentence)
+    sentence = sentence.replace("-", "")
+    doc = NLP(sentence)
+
+    processed_tokens = []
+
+    for token in doc:
+        if token.is_punct or token.is_space or token.text.lower() in IRRELEVANT_WORDS:
+            continue
+        if token.is_stop:
+            continue
+
+        processed_tokens.append(token.lemma_)
+
+    word_to_index = {word: i for i, word in enumerate(GLOVE.vocab.strings)} 
+
+    sentence_indx: List[int] = word2idx(word_to_index, sentence)
+    sentence_idxs: torch.Tensor = torch.Tensor(sentence_indx)
+    return sentence_idxs

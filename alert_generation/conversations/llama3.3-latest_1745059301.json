@@ -1,0 +1,10 @@
+[
+    {
+        "role": "user",
+        "content": "Generate an alert of the following sentence knowing that the data in parenthesis is an Named-entity tag\nand that the sentiment of the sentece is SA = positive. You can use different alert sentences as long as \nyou mention something related to the entity type of the subject and something related with the SA of\nthe phrase.\n\n### SENTENCE\nLocal (B-PERSON) library (I-PERSON) hosts (B-GPE) weekend (B-GPE) book (B-GPE) fair (B-GPE) for (B-GPE) community (B-GPE) members (B-GPE)\n\n### EXAMPLE\nAn example of an alert is for the inputs: “Musk (B-PERSON) accused of giving Nazi (B-ORG) salute during Trump (B-PERSON) inauguration (B-EVENT) celebrations (I-EVENT)\" SA = negative\noutput: \" REPUTATION RISK: Musk mentioned NEGATIVELY\""
+    },
+    {
+        "role": "assistant",
+        "content": "Here is a possible alert for the given sentence:\n\n**COMMUNITY EVENT ALERT**: Local library hosts a weekend book fair, receiving POSITIVE attention from community members!\n\nThis alert mentions something related to the entity type of the subject (library and community members, which are related to GPE/PERSON entities) and also highlights the positive sentiment (SA = positive) of the sentence. \n\nAlternatively, here is another possible alert:\n\n**POSITIVE VIBES IN THE NEIGHBORHOOD**: A local library (a key community hub) is hosting a weekend book fair, generating a POSITIVE buzz among community members!\n\nThis alert also conveys the positive sentiment and highlights the importance of the library as a community hub."
+    }
+]

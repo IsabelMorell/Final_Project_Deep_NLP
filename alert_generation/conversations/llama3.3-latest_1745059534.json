@@ -1,0 +1,10 @@
+[
+    {
+        "role": "user",
+        "content": "Generate an alert of the following sentence knowing that the data in parenthesis is an Named-entity tag\nand that the sentiment of the sentece is SA = negative. You can use different alert sentences as long as \nyou mention something related to the entity type of the subject and something related with the SA of\nthe phrase.\n\n### SENTENCE\nA (B-FAC) team (B-FAC) of (B-FAC) engineers (B-FAC) from (B-FAC) the (B-FAC) state (B-FAC) university (B-FAC) has (B-FAC) completed (B-FAC) a (B-FAC) study (B-FAC) evaluating (B-PERSON) the (B-PERSON) durability (B-FAC) of (B-FAC) recycled (B-FAC) materials (B-FAC) in (B-FAC) road (B-FAC) construction (B-FAC)\n\n### EXAMPLE\nAn example of an alert is for the inputs: “Musk (B-PERSON) accused of giving Nazi (B-ORG) salute during Trump (B-PERSON) inauguration (B-EVENT) celebrations (I-EVENT)\" SA = negative\noutput: \" REPUTATION RISK: Musk mentioned NEGATIVELY\""
+    },
+    {
+        "role": "assistant",
+        "content": "Here's an alert for the given sentence:\n\n**INFRASTRUCTURE CONCERN**: A state university team, specifically a facility-related entity, is associated with a NEGATIVE sentiment regarding the durability of recycled materials in road construction.\n\nAlternatively, you could also phrase it as:\n\n**RESEARCH ALERT**: The state university's study on recycled materials in road construction has raised concerns, indicating a NEGATIVE outlook for the infrastructure industry.\n\nOr:\n\n**FACILITY MANAGEMENT RISK**: The state university team's findings on the durability of recycled materials in road construction have been met with a NEGATIVE sentiment, potentially impacting facility-related projects."
+    }
+]

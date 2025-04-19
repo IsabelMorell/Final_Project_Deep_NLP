@@ -1,0 +1,10 @@
+[
+    {
+        "role": "user",
+        "content": "Generate an alert of the following sentence knowing that the data in parenthesis is an Named-entity tag\nand that the sentiment of the sentece is SA = neutral. You can use different alert sentences as long as \nyou mention something related to the entity type of the subject and something related with the SA of\nthe phrase.\n\n### SENTENCE\nMr. (B-FAC) and (B-FAC) Mrs. (B-FAC) Dursley, (B-FAC) of (B-FAC) number (B-FAC) four, (B-FAC) Privet (B-FAC) Drive, (B-FAC) were (B-FAC) proud (B-FAC) to (B-FAC) say (B-FAC) that (B-FAC) they (B-FAC) were (B-FAC) perfectly (B-FAC) normal (B-FAC)\n\n### EXAMPLE\nAn example of an alert is for the inputs: “Musk (B-PERSON) accused of giving Nazi (B-ORG) salute during Trump (B-PERSON) inauguration (B-EVENT) celebrations (I-EVENT)\" SA = negative\noutput: \" REPUTATION RISK: Musk mentioned NEGATIVELY\""
+    },
+    {
+        "role": "assistant",
+        "content": "Here's an alert for the given sentence:\n\n\"NEUTRAL MENTION: The Dursley family, a group of individuals associated with a specific location (Privet Drive), were mentioned in a neutral context, indicating no significant impact on their reputation.\"\n\nNote that since the sentiment is neutral, I've focused on highlighting the entity type (in this case, a group of individuals) and the lack of any significant emotional tone. Let me know if you'd like me to suggest alternative alerts! \n\nAlternatively, here are a few more options:\n\n* \"LOCATION MENTION: Privet Drive was mentioned in a neutral statement, with no positive or negative connotations.\"\n* \"FAMILY MENTION: The Dursleys were referenced in a neutral context, suggesting no notable reputation implications.\"\n* \"INFORMATIONAL UPDATE: A neutral statement was made about the Dursley family's residence and characteristics, with no emotional tone detected.\"\n\nLet me know if any of these options work for you!"
+    }
+]
