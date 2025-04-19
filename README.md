@@ -5,7 +5,9 @@ The objective of this final project for the Natural Language Processing I and De
 
 # Important Notes to Run the Code
 
-This project depends on some SpaCy models, such as `en_core_web_sm` and `en_core_web_lg`. If you haven't installed them yet, or if you encounter the following error:
+This project depends on some SpaCy models, such as `en_core_web_sm` and `en_core_web_lg`. If you haven't installed them yet, or if you encounter one of the following errors:
+
+    OSError: [E050] Can't find model 'en_core_web_sm'. It doesn't seem to be a Python package or a valid path to a data directory.
 
     OSError: [E050] Can't find model 'en_core_web_lg'. It doesn't seem to be a Python package or a valid path to a data directory.
 
@@ -39,6 +41,14 @@ This script loads the `best_model.pt` file from the models/ folder, computes the
 
 ## Generating alerts
 
+To generate alerts you need to download a ollama model like llama3.3. For this you need to run the following comand replacing llama3.3 with the name of the model you want:
+
+    ollama pull llama3.3
+
+Note that you need to install the ollama library specified in the requirements.txt
+
+To know the models available in ollama check out the following link: https://ollama.com/library
+
 To generate alerts based on text input, run:
 
     python -m alert_generation.generate_alerts
@@ -61,3 +71,13 @@ If you want to train the model with your own dataset:
     python -m src.train
 
 The training script will automatically clean your data and generate the `_token.csv` files needed for training.
+
+## Running the complete pipeline (NER + SA + Alert Generation)
+If you want to test out the whole pipeline with out pre-trained NERSA model, then follow the next steps:
+
+1. Download the ollama model you want to use
+
+2. In the file alert_generation/generate_alerts.py, modify the variable MODEL (line 19) with the
+name if the model you have dowloaded
+
+3. Write the sentences you want to analyze in the variable sentences (line 155) in the same file (alert_generation/generate_alerts.py)
