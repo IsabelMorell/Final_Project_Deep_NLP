@@ -53,4 +53,7 @@ if __name__ == "__main__":
     correct_ner_occurrences, ner_occurrences = test_accuracy_ner.ner_entities_accuracy()
     idx2entity = return_index2label(ENTITY2INDEX)
     for idx, entity in idx2entity.items():
-        print(f"Entity {entity}: {correct_ner_occurrences[idx]}/{ner_occurrences[idx]}")
+        if ner_occurrences[idx] != 0:
+            print(f"Entity {entity}: {correct_ner_occurrences[idx]}/{ner_occurrences[idx]} = {correct_ner_occurrences[idx]/ner_occurrences[idx]*100}%")
+        else:
+            print(f"Entity {entity}: {correct_ner_occurrences[idx]}/{ner_occurrences[idx]}")
