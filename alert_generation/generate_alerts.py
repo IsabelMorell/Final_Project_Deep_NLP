@@ -178,7 +178,6 @@ if __name__ == "__main__":
         # Pass original sentence through the model
         with torch.no_grad():
             sentence_idxs = sentence_idxs.to(device)
-            # sentence_len = sentence_len.to(device)
 
             ner_logits, sa_logits = model(sentence_idxs, sentence_len)
 
@@ -196,14 +195,9 @@ if __name__ == "__main__":
             ner_tags.append(tag)
 
         # Obtain most probable sentence sentiment
-        # sa = "negative"
-        # sa = "positive"
         sa: str = most_probable_entity(sa_logits, INDEX2SA)
 
         # Add NER tags to the sentence
-        # sentence_ner = "Child (B-PER) murdered (O) in (O) Florida (B-LOC)"
-        # sentence_ner = "Gay (B-EVENT) marriage (I-EVENT) has (O) been (O) legalized (O)
-        # in (O) England (B-LOC)!"
         sentence_ner = add_ner_to_sentence(sentence, ner_tags)
 
         try:

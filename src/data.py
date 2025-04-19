@@ -294,6 +294,8 @@ def tokenize_new_sentence(sentence: str) -> Tuple[torch.Tensor, Dict[int, bool]]
 
     Returns:
         torch.Tensor: A tensor containing the token indices.
+        Dict[int, bool]: Dictionary indicating if a word is in the embeddings 
+            vocabulary or not
     """
     sentence = preprocess(sentence)
 
