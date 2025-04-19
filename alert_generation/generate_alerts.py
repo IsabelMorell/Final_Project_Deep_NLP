@@ -51,7 +51,7 @@ def replace_prompt(prompt: str, sentence_ner: str, sa: str, placeholders: List[s
     
     return prompt
 
-def abrir_y_ejecutar_prompt(sentence_ner: str, sa: str) -> Optional[str]:
+def open_and_run_prompt(sentence_ner: str, sa: str) -> Optional[str]:
     """
     Reads the content of the file prompt.txt, replaces the placeholders and 
     prompts the model.
@@ -69,10 +69,10 @@ def abrir_y_ejecutar_prompt(sentence_ner: str, sa: str) -> Optional[str]:
             prompt: str = file.read()
     except FileNotFoundError:
         print("The file 'prompt.txt' isn't in the current folder.")
-        return
+        return None
     except Exception as e:
         print(f"Error when reading file 'prompt.txt': {e}")
-        return
+        return None
     
     replaced_prompt: str = replace_prompt(prompt, sentence_ner, sa, placeholder)
     
@@ -80,7 +80,7 @@ def abrir_y_ejecutar_prompt(sentence_ner: str, sa: str) -> Optional[str]:
     models = [MODEL]  # u.get_available_models()[0:-4]
     if not models:
         print("There are no models available.")
-        return
+        return None
     
     # For each model, run function 'prompt_model' with the replaced prompt
     for model in models:
@@ -92,6 +92,8 @@ def abrir_y_ejecutar_prompt(sentence_ner: str, sa: str) -> Optional[str]:
             return response
         except Exception as e:
             print(f"Error while running model {model}: {e}")
+    
+    return None
 
 def most_probable_entity(logits: torch.Tensor, index2entity: Dict[int, str]) -> str:
     """
@@ -105,7 +107,7 @@ def most_probable_entity(logits: torch.Tensor, index2entity: Dict[int, str]) -> 
         entity (str): entity associated with the highest probability
     """
     
-    idx_most_probable: int = torch.argmax(logits).to(int).item()
+    idx_most_probable: int = int(torch.argmax(logits).item())
     entity: str = index2entity[idx_most_probable]
     return entity
 
@@ -180,7 +182,7 @@ if __name__ == "__main__":
         sentence_ner = add_ner_to_sentence(sentence, ner_tags)
 
         try:
-            response = abrir_y_ejecutar_prompt(sentence_ner, sa)
+            response = open_and_run_prompt(sentence_ner, sa)
             print("Result for sentence:", sentence_ner)
             print("Sentiment of the sentence:", sa)
             print("Model response")

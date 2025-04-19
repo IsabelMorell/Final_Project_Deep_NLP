@@ -21,9 +21,18 @@ DATA_PATH: Final[str] = "data"
 
 def evaluate(name: str) -> Tuple[float, float, Accuracy]:
     """
-    This function is the main program for the testing.
-    """
+    Evaluates a trained model on the test dataset, returning the NER and SA accuracies 
+    and the Accuracy object containing detailed NER entity statistics.
 
+    Args:
+        name (str): Name of the saved model to load and evaluate.
+
+    Returns:
+        Tuple[float, float, Accuracy]: 
+            - NER accuracy (float)
+            - Sentiment Analysis (SA) accuracy (float)
+            - Accuracy object with detailed entity-wise NER performance.
+    """
     batch_size: int = 128
     # load data
     test_data: DataLoader

@@ -141,7 +141,7 @@ def prompt_model(model: str, prompt: str, path: str, timeout: int = 900) -> str:
     return response
 
 
-def save_conversation_to_json(model: str, messages: List[str], path: str):
+def save_conversation_to_json(model: str, messages: List[Dict[str, str]], path: str):
     """
     Saves the conversation in a json with the timestamp
     

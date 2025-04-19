@@ -14,20 +14,17 @@ from torch.utils.data import Dataset, DataLoader
 import os
 
 # own modules
-from src.utils import fix_tags_string, process_sentence_and_align_tags, collate_fn, replace_contractions, word2idx
+from src.utils import fix_tags_string, process_sentence_and_align_tags, \
+    collate_fn, replace_contractions, word2idx
 from src.constants import IRRELEVANT_WORDS, NLP, GLOVE
 
 MODEL = f"cardiffnlp/twitter-roberta-base-sentiment-latest"
 
 class OntoNotesDataset(Dataset):
     """
-
     This class is a custom PyTorch Dataset for the OntoNotes dataset.
-
-    Args:
-        df: A pandas DataFrame containing at least the columns 'tokens', 'tags', and 'SA'.
-
     """
+    
     def __init__(self, df: pd.DataFrame):
 
         """
@@ -35,11 +32,12 @@ class OntoNotesDataset(Dataset):
 
         Args:
             df: A DataFrame containing 'tokens', 'tags', and 'SA' columns.
-
         """
         self.tokens = df["tokens"].tolist()
 
-        df["tags"] = df["tags"].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else x)
+        df["tags"] = df["tags"].apply(
+            lambda x: ast.literal_eval(x) if isinstance(x, str) else x
+        )
         self.tags = [torch.tensor(t, dtype=torch.float32) for t in df["tags"].tolist()]
         
         self.SA: torch.Tensor = torch.tensor(df["SA"].values, dtype=torch.int)
@@ -237,6 +235,19 @@ def load_data(batch_size: int=64, num_workers: int = 0) -> Tuple[DataLoader, Dat
     return train_dataloader, val_dataloader, test_dataloader
 
 def tokenize_new_sentence(sentence: str) -> torch.Tensor:
+    """
+    Tokenizes and preprocesses a new sentence to obtain a tensor of token indices.
+
+    The sentence is cleaned by replacing usernames and URLs, removing contractions 
+    and hyphens, and eliminating punctuation, stopwords, spaces, and irrelevant words. 
+    The remaining tokens are lemmatized and converted into indices based on the GloVe vocabulary.
+
+    Args:
+        sentence (str): The input sentence to preprocess and tokenize.
+
+    Returns:
+        torch.Tensor: A tensor containing the token indices.
+    """
     sentence = preprocess(sentence)
 
     sentence = replace_contractions(sentence)
@@ -255,6 +266,6 @@ def tokenize_new_sentence(sentence: str) -> torch.Tensor:
 
     word_to_index = {word: i for i, word in enumerate(GLOVE.vocab.strings)} 
 
-    sentence_indx: List[int] = word2idx(word_to_index, sentence)
+    sentence_indx: torch.Tensor = word2idx(word_to_index, processed_tokens)
     sentence_idxs: torch.Tensor = torch.Tensor(sentence_indx)
     return sentence_idxs

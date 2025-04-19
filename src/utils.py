@@ -8,7 +8,7 @@ from datasets import load_dataset
 from torch.nn.utils.rnn import pad_sequence
 
 # other libraries
-from typing import Tuple, List, Dict, Optional
+from typing import Tuple, List, Dict, Optional, Any
 import pandas as pd
 import os
 import random
@@ -20,17 +20,16 @@ import src.constants as cte
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
-# HOLA SOY MARÍA, AQUÍ NO SE QUE PONER EN LO QUE DEVUELVE
-def fix_tags_string(x) -> List[int]:
+def fix_tags_string(x: Any) -> List[int]:
     """
     This function processes a string of comma-separated numbers and converts it into a list 
     of integers. If the input is not a string, it returns the input unchanged.
 
     Args:
-        x: a string containing comma-separated numbers.
+        x (Any): Input data, typically a string containing comma-separated numbers.
 
     Returns:
-        A list of integers if x is a string, otherwise returns the original input unchanged.
+        List[int]: A list of integers if input was a string, otherwise returns input unchanged.
     """
     if isinstance(x, str):
         x_clean = re.sub(r"\s+", ",", x.strip())
@@ -38,7 +37,7 @@ def fix_tags_string(x) -> List[int]:
         return nums
     return x 
 
-def replace_contractions(text) -> str:
+def replace_contractions(text: str) -> str:
     """
     This function replaces the contractions present in the given text with their 
     expanded form
@@ -53,7 +52,7 @@ def replace_contractions(text) -> str:
         text = re.sub(r"\b" + re.escape(contraction) + r"\b", replacement, text)
     return text
 
-def process_sentence_and_align_tags(sentence, original_tags) -> Tuple[List, List]:
+def process_sentence_and_align_tags(sentence: str, original_tags: List[int]) -> Tuple[List[str], List[int]]:
     """
     This function processes a sentence by removing contractions, punctuation, stop words,
     and other irrelevant words. Then, aligns the given tags with the filtered tokens.
@@ -72,10 +71,10 @@ def process_sentence_and_align_tags(sentence, original_tags) -> Tuple[List, List
     sentence = sentence.replace("-", "")
     doc = cte.NLP(sentence)
 
-    processed_tokens = []
-    aligned_tags = []
+    processed_tokens: List[str] = []
+    aligned_tags: List[int] = []
 
-    tag_idx = 0
+    tag_idx: int = 0
     for token in doc:
         if token.is_punct or token.is_space or token.text.lower() in cte.IRRELEVANT_WORDS:
             tag_idx += 1  # Skip both token and its tag
@@ -94,7 +93,7 @@ def process_sentence_and_align_tags(sentence, original_tags) -> Tuple[List, List
 
     return processed_tokens, aligned_tags
 
-def word2idx(embedding_dict, tweet) -> torch.Tensor:
+def word2idx(embedding_dict: Dict[str, int], tweet: List[str]) -> torch.Tensor:
     """
     This function converts a list of words (a tweet) into a tensor of corresponding indices
     using a given embedding dictionary.
@@ -107,12 +106,12 @@ def word2idx(embedding_dict, tweet) -> torch.Tensor:
         tensor containing the indices of the words in the tweet
 
     """
-    indices = [embedding_dict[word] for word in tweet if word in embedding_dict]
+    indices: List[int] = [embedding_dict[word] for word in tweet if word in embedding_dict]
     if not indices:
         indices = [0]  
     return torch.tensor(indices)
 
-def collate_fn(batch) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+def collate_fn(batch: List[Tuple[List[List[str]], torch.Tensor, torch.Tensor]]) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     """
     This function processes a batch of samples for a DataLoader, preparing text sequences
     and labels with padding and sorting by length.
@@ -132,17 +131,16 @@ def collate_fn(batch) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.T
 
     """
     
-    word_to_index = {word: i for i, word in enumerate(cte.GLOVE.vocab.strings)} 
+    word_to_index: Dict[str, int] = {word: i for i, word in enumerate(cte.GLOVE.vocab.strings)} 
 
     # Ordenar por longitud de la secuencia (descendente)
     batch = sorted(batch, key=lambda x: len(x[0]), reverse=True)
     texts, labels, sa = zip(*batch)
 
     # Convertir palabras a índices
-    # texts_indx = [word2idx(word_to_index, text) for text in texts if word2idx(word_to_index, text).nelement() > 0]
     
-    texts_indx = []
-    labels_indx = []
+    texts_indx: List[torch.Tensor] = []
+    labels_indx: List[torch.Tensor] = []
     for i, text in enumerate(texts):
         word_2_idx = word2idx(word_to_index, text)
         if word_2_idx.nelement() > 0:
@@ -177,6 +175,15 @@ def collate_fn(batch) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.T
     return texts_padded, tags_onehot, sa_onehot, lengths
 
 def return_index2label(label2index: Dict[str, int]) -> Dict[int, str]:
+    """Reverses a label-to-index mapping to an index-to-label mapping.
+
+    Args:
+        label2index (Dict[str, int]): Dictionary mapping labels to indices.
+
+    Returns:
+        Dict[int, str]: Dictionary mapping indices to labels.
+    """
+    
     index2label = {}
     for label in label2index:
         index = label2index[label]
