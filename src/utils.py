@@ -3,43 +3,42 @@ import torch
 import numpy as np
 
 from torch.jit import RecursiveScriptModule
-from torch.utils.data import Dataset, DataLoader
-from datasets import load_dataset
 from torch.nn.utils.rnn import pad_sequence
 
 # other libraries
 from typing import Tuple, List, Dict, Optional, Any
-import pandas as pd
 import os
 import random
 import re
-import ast
 
 # own modules
 import src.constants as cte
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
+
 def fix_tags_string(x: Any) -> List[int]:
     """
-    This function processes a string of comma-separated numbers and converts it into a list 
-    of integers. If the input is not a string, it returns the input unchanged.
+    This function processes a string of comma-separated numbers and converts it into a
+    list of integers. If the input is not a string, it returns the input unchanged.
 
     Args:
         x (Any): Input data, typically a string containing comma-separated numbers.
 
     Returns:
-        List[int]: A list of integers if input was a string, otherwise returns input unchanged.
+        List[int]: A list of integers if input was a string, otherwise returns input
+        unchanged.
     """
     if isinstance(x, str):
         x_clean = re.sub(r"\s+", ",", x.strip())
         nums = [int(n) for n in x_clean.strip("[]").split(",") if n.strip() != ""]
         return nums
-    return x 
+    return x
+
 
 def replace_contractions(text: str) -> str:
     """
-    This function replaces the contractions present in the given text with their 
+    This function replaces the contractions present in the given text with their
     expanded form
 
     Args:
@@ -52,21 +51,25 @@ def replace_contractions(text: str) -> str:
         text = re.sub(r"\b" + re.escape(contraction) + r"\b", replacement, text)
     return text
 
-def process_sentence_and_align_tags(sentence: str, original_tags: List[int]) -> Tuple[List[str], List[int]]:
+
+def process_sentence_and_align_tags(
+    sentence: str, original_tags: List[int]
+) -> Tuple[List[str], List[int]]:
     """
     This function processes a sentence by removing contractions, punctuation, stop words,
     and other irrelevant words. Then, aligns the given tags with the filtered tokens.
 
     Args:
         sentence: string with the raw input
-        original_tags: a list of tags corresponding to the original tokens in the sentence.
+        original_tags: a list of tags corresponding to the original tokens in the
+        sentence.
 
     Returns:
         Tuple containing:
             - processed_tokens: a list of cleaned, lemmatized tokens.
             - aligned_tags: a list of tags aligned with the processed tokens.
     """
-    
+
     sentence = replace_contractions(sentence)
     sentence = sentence.replace("-", "")
     doc = cte.NLP(sentence)
@@ -76,7 +79,11 @@ def process_sentence_and_align_tags(sentence: str, original_tags: List[int]) -> 
 
     tag_idx: int = 0
     for token in doc:
-        if token.is_punct or token.is_space or token.text.lower() in cte.IRRELEVANT_WORDS:
+        if (
+            token.is_punct
+            or token.is_space
+            or token.text.lower() in cte.IRRELEVANT_WORDS
+        ):
             tag_idx += 1  # Skip both token and its tag
             continue
         if token.is_stop:
@@ -93,10 +100,11 @@ def process_sentence_and_align_tags(sentence: str, original_tags: List[int]) -> 
 
     return processed_tokens, aligned_tags
 
+
 def word2idx(embedding_dict: Dict[str, int], tweet: List[str]) -> torch.Tensor:
     """
-    This function converts a list of words (a tweet) into a tensor of corresponding indices
-    using a given embedding dictionary.
+    This function converts a list of words (a tweet) into a tensor of corresponding
+    indices using a given embedding dictionary.
 
     Args:
         embedding_dict: a dictionary mapping words to their corresponding indices.
@@ -106,12 +114,17 @@ def word2idx(embedding_dict: Dict[str, int], tweet: List[str]) -> torch.Tensor:
         tensor containing the indices of the words in the tweet
 
     """
-    indices: List[int] = [embedding_dict[word] for word in tweet if word in embedding_dict]
+    indices: List[int] = [
+        embedding_dict[word] for word in tweet if word in embedding_dict
+    ]
     if not indices:
-        indices = [0]  
+        indices = [0]
     return torch.tensor(indices)
 
-def collate_fn(batch: List[Tuple[List[List[str]], torch.Tensor, torch.Tensor]]) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+
+def collate_fn(
+    batch: List[Tuple[List[List[str]], torch.Tensor, torch.Tensor]]
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     """
     This function processes a batch of samples for a DataLoader, preparing text sequences
     and labels with padding and sorting by length.
@@ -130,15 +143,17 @@ def collate_fn(batch: List[Tuple[List[List[str]], torch.Tensor, torch.Tensor]]) 
             - lengths: tensor of original sequence lengths.
 
     """
-    
-    word_to_index: Dict[str, int] = {word: i for i, word in enumerate(cte.GLOVE.vocab.strings)} 
+
+    word_to_index: Dict[str, int] = {
+        word: i for i, word in enumerate(cte.GLOVE.vocab.strings)
+    }
 
     # Ordenar por longitud de la secuencia (descendente)
     batch = sorted(batch, key=lambda x: len(x[0]), reverse=True)
     texts, labels, sa = zip(*batch)
 
     # Convertir palabras a índices
-    
+
     texts_indx: List[torch.Tensor] = []
     labels_indx: List[torch.Tensor] = []
     for i, text in enumerate(texts):
@@ -149,21 +164,25 @@ def collate_fn(batch: List[Tuple[List[List[str]], torch.Tensor, torch.Tensor]]) 
 
     # Padding a la misma longitud
     texts_padded = pad_sequence(texts_indx, batch_first=True, padding_value=0)
-    tags_padded = pad_sequence(labels_indx, batch_first=True, padding_value=cte.ENTITY2INDEX["O"]).long()
+    tags_padded = pad_sequence(
+        labels_indx, batch_first=True, padding_value=cte.ENTITY2INDEX["O"]
+    ).long()
 
     # Longitudes de cada secuencia
     lengths = torch.tensor([len(text) for text in texts_padded], dtype=torch.long)
-    
+
     # One hot NER
     batch_size, max_len = tags_padded.shape
-    tags_onehot = torch.zeros((batch_size, int(lengths[0].item()), cte.NUM_NER_CLASSES), dtype=torch.float)
+    tags_onehot = torch.zeros(
+        (batch_size, int(lengths[0].item()), cte.NUM_NER_CLASSES), dtype=torch.float
+    )
 
     label_idx: int
     for i in range(batch_size):
         for j in range(lengths[i]):
             label_idx = int(tags_padded[i, j].item())
             tags_onehot[i, j, label_idx] = 1.0
-        
+
     # One hot SA
     batch_size = len(sa)
     sa_onehot = torch.zeros((batch_size, cte.NUM_SA_CLASSES), dtype=torch.float)
@@ -174,6 +193,7 @@ def collate_fn(batch: List[Tuple[List[List[str]], torch.Tensor, torch.Tensor]]) 
 
     return texts_padded, tags_onehot, sa_onehot, lengths
 
+
 def return_index2label(label2index: Dict[str, int]) -> Dict[int, str]:
     """Reverses a label-to-index mapping to an index-to-label mapping.
 
@@ -183,12 +203,13 @@ def return_index2label(label2index: Dict[str, int]) -> Dict[int, str]:
     Returns:
         Dict[int, str]: Dictionary mapping indices to labels.
     """
-    
+
     index2label = {}
     for label in label2index:
         index = label2index[label]
         index2label[index] = label
     return index2label
+
 
 class Accuracy:
     """
@@ -211,7 +232,7 @@ class Accuracy:
         self.correct = 0
         self.total = 0
         self.task = task
-        
+
         if task:
             if task.lower() == "ner":
                 idx2entity: Dict[int, str] = return_index2label(cte.ENTITY2INDEX)
@@ -239,18 +260,18 @@ class Accuracy:
         labels = labels.argmax(-1).type_as(labels)
 
         # update counts
-        self.correct += int(predictions.eq(labels).sum().item())        
+        self.correct += int(predictions.eq(labels).sum().item())
         self.total += labels.numel()
-        
+
         if self.task == "ner":
             for idx in self.idxs:
-                labels_idx = (labels.to(torch.long) == idx)
-                predictions_idx = (predictions.to(torch.long) == idx)
-                    
-                correct_ner_idx = (labels_idx == predictions_idx)*labels_idx
-                
-                self.correct_ner_occurrences[idx] += int(correct_ner_idx.sum().item())  
-                
+                labels_idx = labels.to(torch.long) == idx
+                predictions_idx = predictions.to(torch.long) == idx
+
+                correct_ner_idx = (labels_idx == predictions_idx) * labels_idx
+
+                self.correct_ner_occurrences[idx] += int(correct_ner_idx.sum().item())
+
                 self.ner_occurrences[idx] += int((labels_idx.sum()).item())
 
         return None
@@ -264,7 +285,7 @@ class Accuracy:
         """
 
         return self.correct / self.total
-    
+
     def ner_entities_accuracy(self) -> Tuple[Dict[int, int], Dict[int, int]]:
         if self.task == "ner":
             return self.correct_ner_occurrences, self.ner_occurrences
@@ -282,6 +303,7 @@ class Accuracy:
         self.total = 0
 
         return None
+
 
 def save_model(model: torch.nn.Module, name: str) -> None:
     """

@@ -20,24 +20,30 @@ MODEL = "llama3.3:latest"
 
 placeholder: List[str] = [
     "[S]",  # sentiment of the sentence
-    "[N]"  # sentence + NER tags
+    "[N]",  # sentence + NER tags
 ]
 
-def replace_prompt(prompt: str, sentence_ner: str, sa: str, placeholders: List[str]) -> str:
+
+def replace_prompt(
+    prompt: str, sentence_ner: str, sa: str, placeholders: List[str]
+) -> str:
     """
-    Replaces the placeholders in the prompt with the content of the sentence_ner and sa strings.
-    
+    Replaces the placeholders in the prompt with the content of the sentence_ner and sa
+    strings.
+
     Args:
-        prompt (str): alert generation tasks with the placeholders [S], [N] where the first refers to the sentence's
-            sentiment and the second to the sentence along with the NER tags associated to the words.
+        prompt (str): alert generation tasks with the placeholders [S], [N] where the
+        first refers to the sentence's sentiment and the second to the sentence along
+        with the NER tags associated to the words.
         sentence_ner (str): input sentence with its associated NER tags.
         sa (str): sentiment of the input sentence.
         placeholders (list): placeholders to replace
-    
+
     Returns:
-        prompt (str): prompt with the placeholders replaced by the sa and sentence_ner strings.
+        prompt (str): prompt with the placeholders replaced by the sa and sentence_ner
+        strings.
     """
-    
+
     content: str
     # Loop through the placeholders and replace them in the prompt
     for i in range(len(placeholders)):
@@ -45,15 +51,16 @@ def replace_prompt(prompt: str, sentence_ner: str, sa: str, placeholders: List[s
             content = sa
         else:
             content = sentence_ner
-        
+
         # Replace the placeholder with the corresponding content
         prompt = prompt.replace(placeholders[i], content)
-    
+
     return prompt
+
 
 def open_and_run_prompt(sentence_ner: str, sa: str) -> Optional[str]:
     """
-    Reads the content of the file prompt.txt, replaces the placeholders and 
+    Reads the content of the file prompt.txt, replaces the placeholders and
     prompts the model.
 
     Args:
@@ -63,9 +70,9 @@ def open_and_run_prompt(sentence_ner: str, sa: str) -> Optional[str]:
     Returns:
         response (str): models response to the prompt
     """
-    
+
     try:
-        with open('./alert_generation/prompt.txt', 'r', encoding='utf-8') as file:
+        with open("./alert_generation/prompt.txt", "r", encoding="utf-8") as file:
             prompt: str = file.read()
     except FileNotFoundError:
         print("The file 'prompt.txt' isn't in the current folder.")
@@ -73,15 +80,15 @@ def open_and_run_prompt(sentence_ner: str, sa: str) -> Optional[str]:
     except Exception as e:
         print(f"Error when reading file 'prompt.txt': {e}")
         return None
-    
+
     replaced_prompt: str = replace_prompt(prompt, sentence_ner, sa, placeholder)
-    
+
     # Get available models
     models = [MODEL]  # u.get_available_models()[0:-4]
     if not models:
         print("There are no models available.")
         return None
-    
+
     # For each model, run function 'prompt_model' with the replaced prompt
     for model in models:
         u.delete_history()
@@ -92,8 +99,9 @@ def open_and_run_prompt(sentence_ner: str, sa: str) -> Optional[str]:
             return response
         except Exception as e:
             print(f"Error while running model {model}: {e}")
-    
+
     return None
+
 
 def most_probable_entity(logits: torch.Tensor, index2entity: Dict[int, str]) -> str:
     """
@@ -101,26 +109,30 @@ def most_probable_entity(logits: torch.Tensor, index2entity: Dict[int, str]) -> 
 
     Args:
         logits (torch.Tensor): probabilities associated with a specific index
-        index2entity (Dict[int, str]): dictionary with the relationship between the indexes and the entities
+        index2entity (Dict[int, str]): dictionary with the relationship between the
+        indexes and the entities
 
     Returns:
         entity (str): entity associated with the highest probability
     """
-    
+
     idx_most_probable: int = int(torch.argmax(logits).item())
     entity: str = index2entity[idx_most_probable]
     return entity
 
+
 def add_ner_to_sentence(sentence: str, ner_tags: List[str]) -> str:
     """
-    For every word in a sentence, it is followed by its associated NER tag written in parenthesis.
+    For every word in a sentence, it is followed by its associated NER tag written in
+    parenthesis.
 
     Args:
         sentence (str): input sentence
         ner_tags (List[str]): NER tags associated to each word of the input sentence
 
     Returns:
-        ner_sentence (str): sentence where every word is followed by its associated NER tag written in parenthesis
+        ner_sentence (str): sentence where every word is followed by its associated NER
+        tag written in parenthesis
     """
     ner_sentence = ""
     for i, word in enumerate(sentence.split(" ")):
@@ -145,31 +157,38 @@ if __name__ == "__main__":
         "Gay marriage has been legalized in England!",
         "Voluteers gather to clean up the city park after signs of vandalism",
         "Scientist discover new vaccine against malaria",
-        "Massive earthquake strikes downtown Tokyo.", 
-	    "Firefighters rescue family trapped in California wildfire.",
-        "Mr. and Mrs. Dursley, of number four, Privet Drive, were proud to say that they were perfectly normal",
+        "Massive earthquake strikes downtown Tokyo.",
+        "Firefighters rescue family trapped in California wildfire.",
+        "Mr. and Mrs. Dursley, of number four, Privet Drive, were proud to say that they\
+            were perfectly normal",
         "Local library hosts weekend book fair for community members",
-	    "Post office changes hours for holiday season",
-        "A team of engineers from the state university has completed a study evaluating the durability of recycled materials in road construction"
+        "Post office changes hours for holiday season",
+        "A team of engineers from the state university has completed a study evaluating \
+            the durability of recycled materials in road construction",
     ]
 
     for sentence in sentences:
         sentence_idxs: torch.Tensor = tokenize_new_sentence(sentence)
         sentence_idxs = sentence_idxs.unsqueeze(0)
 
-        sentence_len: torch.Tensor = torch.tensor([sentence_idxs.shape[1]], dtype=torch.int64)
+        sentence_len: torch.Tensor = torch.tensor(
+            [sentence_idxs.shape[1]], dtype=torch.int64
+        )
 
         # Pass original sentence through the model
         with torch.no_grad():
             sentence_idxs = sentence_idxs.to(device)
             # sentence_len = sentence_len.to(device)
-            
+
             ner_logits, sa_logits = model(sentence_idxs, sentence_len)
 
         # Obtain most probable NER tag for each word
         ner_logits = ner_logits.squeeze(0)
-        
-        ner_tags: list = [most_probable_entity(ner_logits[i, :], INDEX2ENTITY) for i, word in enumerate(sentence.split(" "))]
+
+        ner_tags: list = [
+            most_probable_entity(ner_logits[i, :], INDEX2ENTITY)
+            for i, word in enumerate(sentence.split(" "))
+        ]
 
         # Obtain most probable sentence sentiment
         # sa = "negative"
@@ -178,7 +197,8 @@ if __name__ == "__main__":
 
         # Add NER tags to the sentence
         # sentence_ner = "Child (B-PER) murdered (O) in (O) Florida (B-LOC)"
-        # sentence_ner = "Gay (B-EVENT) marriage (I-EVENT) has (O) been (O) legalized (O) in (O) England (B-LOC)!"
+        # sentence_ner = "Gay (B-EVENT) marriage (I-EVENT) has (O) been (O) legalized (O)
+        # in (O) England (B-LOC)!"
         sentence_ner = add_ner_to_sentence(sentence, ner_tags)
 
         try:

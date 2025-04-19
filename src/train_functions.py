@@ -10,6 +10,7 @@ from typing import Tuple
 # own modules
 from src.utils import Accuracy
 
+
 def train_step(
     model: torch.nn.Module,
     train_data: DataLoader,
@@ -20,7 +21,7 @@ def train_step(
     epoch: int,
     device: torch.device,
     train_accuracy_ner: Accuracy,
-    train_accuracy_sa: Accuracy
+    train_accuracy_sa: Accuracy,
 ) -> None:
     """
     This function computes the training step.
@@ -50,7 +51,7 @@ def train_step(
 
         outputs, sa = model(sentences, text_len)
 
-        loss_value_ner = loss_ner(outputs, ner_labels[:,:text_len[0],:])
+        loss_value_ner = loss_ner(outputs, ner_labels[:, : text_len[0], :])
         loss_value_sa = loss_sa(sa, sentiment)
 
         loss_value = loss_value_ner + loss_value_sa
@@ -72,6 +73,7 @@ def train_step(
     writer.add_scalar("train_ner/accuracy", train_accuracy_ner.compute(), epoch)
     writer.add_scalar("train_sa/accuracy", train_accuracy_sa.compute(), epoch)
 
+
 def val_step(
     model: torch.nn.Module,
     val_data: DataLoader,
@@ -82,7 +84,7 @@ def val_step(
     epoch: int,
     device: torch.device,
     val_accuracy_ner: Accuracy,
-    val_accuracy_sa: Accuracy
+    val_accuracy_sa: Accuracy,
 ) -> None:
     """
     This function computes the validation step.
@@ -121,7 +123,7 @@ def val_step(
 
             val_accuracy_ner.update(outputs, ner_labels)
             val_accuracy_sa.update(sa, sentiment)
-        
+
         scheduler.step()
 
         # write on tensorboard
@@ -129,6 +131,7 @@ def val_step(
         writer.add_scalar("val_sa/loss", np.mean(losses_sa), epoch)
         writer.add_scalar("val_ner/accuracy", val_accuracy_ner.compute(), epoch)
         writer.add_scalar("val_sa/accuracy", val_accuracy_sa.compute(), epoch)
+
 
 def t_step(
     model: torch.nn.Module,

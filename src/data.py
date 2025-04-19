@@ -14,19 +14,24 @@ from torch.utils.data import Dataset, DataLoader
 import os
 
 # own modules
-from src.utils import fix_tags_string, process_sentence_and_align_tags, \
-    collate_fn, replace_contractions, word2idx
+from src.utils import (
+    fix_tags_string,
+    process_sentence_and_align_tags,
+    collate_fn,
+    replace_contractions,
+    word2idx,
+)
 from src.constants import IRRELEVANT_WORDS, NLP, GLOVE
 
-MODEL = f"cardiffnlp/twitter-roberta-base-sentiment-latest"
+MODEL = "cardiffnlp/twitter-roberta-base-sentiment-latest"
+
 
 class OntoNotesDataset(Dataset):
     """
     This class is a custom PyTorch Dataset for the OntoNotes dataset.
     """
-    
-    def __init__(self, df: pd.DataFrame):
 
+    def __init__(self, df: pd.DataFrame):
         """
         Initializes the dataset
 
@@ -39,13 +44,13 @@ class OntoNotesDataset(Dataset):
             lambda x: ast.literal_eval(x) if isinstance(x, str) else x
         )
         self.tags = [torch.tensor(t, dtype=torch.float32) for t in df["tags"].tolist()]
-        
+
         self.SA: torch.Tensor = torch.tensor(df["SA"].values, dtype=torch.int)
 
     def __len__(self) -> int:
         """
         Returns the length of the dataset (number of samples).
-        
+
         Returns:
             The number of samples (tokens) in the dataset.
         """
@@ -53,11 +58,12 @@ class OntoNotesDataset(Dataset):
 
     def __getitem__(self, idx: int) -> Tuple[List[str], torch.Tensor, torch.Tensor]:
         """
-        Retrieves the token sequence, associated tags, and sentiment label for a given index.
-        
+        Retrieves the token sequence, associated tags, and sentiment label for
+        a given index.
+
         Args:
             idx: The index of the sample to retrieve.
-        
+
         Returns:
             A tuple containing:
                 - token: The list of tokens at the given index.
@@ -69,14 +75,16 @@ class OntoNotesDataset(Dataset):
         sa: torch.Tensor = self.SA[idx]
         return token, tag, sa
 
+
 def download_data(path: str = "data") -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
-    This function downloads the OntoNotes dataset, processes it, and saves the resulting data
-    as CSV files. The dataset is split into train, validation, and test sets.
+    This function downloads the OntoNotes dataset, processes it, and
+    saves the resulting data as CSV files. The dataset is split into train,
+    validation, and test sets.
 
     Args:
         path (str): The directory path where the data will be saved. Defaults to "data".
-        
+
     Returns:
         A tuple containing three DataFrames:
             - df_train: The processed training data.
@@ -105,12 +113,13 @@ def download_data(path: str = "data") -> Tuple[pd.DataFrame, pd.DataFrame, pd.Da
 
     return df_train, df_val, df_test
 
+
 # Preprocess text (username and link placeholders)
-def preprocess(text:str) -> str:
+def preprocess(text: str) -> str:
     """
-    This function processes a given text by replacing usernames (starting with '@') with 
+    This function processes a given text by replacing usernames (starting with '@') with
     the placeholder '@user', and URLs (starting with 'http') with the placeholder 'http'.
-    
+
     Args:
         text (str): The input text to preprocess.
 
@@ -119,28 +128,30 @@ def preprocess(text:str) -> str:
     """
     new_text = []
     for t in text.split(" "):
-        t = '@user' if t.startswith('@') and len(t) > 1 else t
-        t = 'http' if t.startswith('http') else t
+        t = "@user" if t.startswith("@") and len(t) > 1 else t
+        t = "http" if t.startswith("http") else t
         new_text.append(t)
     return " ".join(new_text)
 
-def analyze_sentiment(sentence:str) -> int:
+
+def analyze_sentiment(sentence: str) -> int:
     """
-    This function performs sentiment analysis on a given sentence by preprocessing it, 
-    tokenizing it, passing it through a pre-trained model, and returning the index of 
+    This function performs sentiment analysis on a given sentence by preprocessing it,
+    tokenizing it, passing it through a pre-trained model, and returning the index of
     the highest sentiment score.
 
     Args:
         sentence (str): The input sentence to analyze.
 
     Returns:
-        int: The index of the highest sentiment score, indicating the sentiment classification.
+        int: The index of the highest sentiment score, indicating the sentiment
+        classification.
     """
     tokenizer = AutoTokenizer.from_pretrained(MODEL)
     model = AutoModelForSequenceClassification.from_pretrained(MODEL)
 
     sentence = preprocess(sentence)
-    encoded_input = tokenizer(sentence, return_tensors='pt')
+    encoded_input = tokenizer(sentence, return_tensors="pt")
     output = model(**encoded_input)
     scores = output[0][0].detach().numpy()
     scores = softmax(scores)
@@ -148,11 +159,13 @@ def analyze_sentiment(sentence:str) -> int:
     ranking = np.argsort(scores)
     ranking = ranking[::-1]
     return ranking[0]
-        
-def process_sentences(df:pd.DataFrame) -> pd.DataFrame:
+
+
+def process_sentences(df: pd.DataFrame) -> pd.DataFrame:
     """
-    This function processes a DataFrame by generating a 'sentence' column from the 'tokens' column 
-    and applies sentiment analysis to each sentence to create a new 'SA' column with sentiment labels.
+    This function processes a DataFrame by generating a 'sentence' column from
+    the 'tokens' column and applies sentiment analysis to each sentence to create
+    a new 'SA' column with sentiment labels.
 
     Args:
         df (pd.DataFrame): The input DataFrame containing a 'tokens' column.
@@ -166,22 +179,25 @@ def process_sentences(df:pd.DataFrame) -> pd.DataFrame:
 
     # Aplicar análisis de sentimiento
     df["SA"] = df["sentence"].apply(analyze_sentiment)
-    
+
     return df
 
 
-def load_data(batch_size: int=64, num_workers: int = 0) -> Tuple[DataLoader, DataLoader, DataLoader]:
+def load_data(
+    batch_size: int = 64, num_workers: int = 0
+) -> Tuple[DataLoader, DataLoader, DataLoader]:
     """
-    This function loads and processes the OntoNotes dataset. It downloads the data if it's not 
-    available locally, preprocesses it, and returns PyTorch DataLoader objects for training, validation, 
+    This function loads and processes the OntoNotes dataset. It downloads the data
+    if it's not available locally, preprocesses it, and returns PyTorch DataLoader
+    objects for training, validation,
     and testing datasets.
 
     Args:
         batch_size (int): The batch size to use for the DataLoader. Defaults to 64.
 
     Returns:
-        Tuple[DataLoader, DataLoader, DataLoader]: A tuple containing the DataLoader for training, 
-        validation, and testing datasets.
+        Tuple[DataLoader, DataLoader, DataLoader]: A tuple containing the DataLoader
+        for training, validation, and testing datasets.
     """
     if not os.path.exists("data"):
         df_train, df_val, df_test = download_data()
@@ -189,27 +205,35 @@ def load_data(batch_size: int=64, num_workers: int = 0) -> Tuple[DataLoader, Dat
         df_train = pd.read_csv("data/train.csv")
         df_val = pd.read_csv("data/val.csv")
         df_test = pd.read_csv("data/test.csv")
-    
+
     if "test_token.csv" not in os.listdir("data"):
         df_train["tags"] = df_train["tags"].apply(fix_tags_string)
         df_val["tags"] = df_val["tags"].apply(fix_tags_string)
         df_test["tags"] = df_test["tags"].apply(fix_tags_string)
 
-
         df_train[["tokens", "tags"]] = df_train.apply(
-            lambda row: pd.Series(process_sentence_and_align_tags(row["sentence"], row["tags"])), axis=1
+            lambda row: pd.Series(
+                process_sentence_and_align_tags(row["sentence"], row["tags"])
+            ),
+            axis=1,
         )
         df_val[["tokens", "tags"]] = df_val.apply(
-            lambda row: pd.Series(process_sentence_and_align_tags(row["sentence"], row["tags"])), axis=1
+            lambda row: pd.Series(
+                process_sentence_and_align_tags(row["sentence"], row["tags"])
+            ),
+            axis=1,
         )
         df_test[["tokens", "tags"]] = df_test.apply(
-            lambda row: pd.Series(process_sentence_and_align_tags(row["sentence"], row["tags"])), axis=1
+            lambda row: pd.Series(
+                process_sentence_and_align_tags(row["sentence"], row["tags"])
+            ),
+            axis=1,
         )
 
-        df_train.to_csv(f"data/train_token.csv",index=False)
-        df_test.to_csv(f"data/test_token.csv",index=False)
-        df_val.to_csv(f"data/val_token.csv",index=False)
-    
+        df_train.to_csv("data/train_token.csv", index=False)
+        df_test.to_csv("data/test_token.csv", index=False)
+        df_val.to_csv("data/val_token.csv", index=False)
+
     else:
         df_train = pd.read_csv("data/train_token.csv")
         df_val = pd.read_csv("data/val_token.csv")
@@ -228,19 +252,42 @@ def load_data(batch_size: int=64, num_workers: int = 0) -> Tuple[DataLoader, Dat
     vl_dataset = OntoNotesDataset(df_val)
     ts_dataset = OntoNotesDataset(df_test)
 
-    train_dataloader: DataLoader = DataLoader(tr_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn, drop_last=True, num_workers=num_workers)
-    val_dataloader: DataLoader = DataLoader(vl_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn, drop_last=True, num_workers=num_workers)
-    test_dataloader: DataLoader = DataLoader(ts_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn, drop_last=True, num_workers=num_workers)
+    train_dataloader: DataLoader = DataLoader(
+        tr_dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        collate_fn=collate_fn,
+        drop_last=True,
+        num_workers=num_workers,
+    )
+    val_dataloader: DataLoader = DataLoader(
+        vl_dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        collate_fn=collate_fn,
+        drop_last=True,
+        num_workers=num_workers,
+    )
+    test_dataloader: DataLoader = DataLoader(
+        ts_dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        collate_fn=collate_fn,
+        drop_last=True,
+        num_workers=num_workers,
+    )
 
     return train_dataloader, val_dataloader, test_dataloader
+
 
 def tokenize_new_sentence(sentence: str) -> torch.Tensor:
     """
     Tokenizes and preprocesses a new sentence to obtain a tensor of token indices.
 
-    The sentence is cleaned by replacing usernames and URLs, removing contractions 
-    and hyphens, and eliminating punctuation, stopwords, spaces, and irrelevant words. 
-    The remaining tokens are lemmatized and converted into indices based on the GloVe vocabulary.
+    The sentence is cleaned by replacing usernames and URLs, removing contractions
+    and hyphens, and eliminating punctuation, stopwords, spaces, and irrelevant words.
+    The remaining tokens are lemmatized and converted into indices based on the GloVe
+    vocabulary.
 
     Args:
         sentence (str): The input sentence to preprocess and tokenize.
@@ -264,7 +311,7 @@ def tokenize_new_sentence(sentence: str) -> torch.Tensor:
 
         processed_tokens.append(token.lemma_)
 
-    word_to_index = {word: i for i, word in enumerate(GLOVE.vocab.strings)} 
+    word_to_index = {word: i for i, word in enumerate(GLOVE.vocab.strings)}
 
     sentence_indx: torch.Tensor = word2idx(word_to_index, processed_tokens)
     sentence_idxs: torch.Tensor = torch.Tensor(sentence_indx)
