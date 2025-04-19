@@ -45,7 +45,7 @@ To generate alerts you need to download a ollama model like llama3.3. For this y
 
     ollama pull llama3.3
 
-Note that you need to install the ollama library specified in the requirements.txt
+Note that you need to have installed the ollama library specified in the requirements.txt
 
 To know the models available in ollama check out the following link: https://ollama.com/library
 
